@@ -2,3 +2,4 @@ bootstrap-secrets.yml
 argocd-config.yml
 argocd-ingress.yml
 cert-manager-config.yml
+coredns-config.yml
