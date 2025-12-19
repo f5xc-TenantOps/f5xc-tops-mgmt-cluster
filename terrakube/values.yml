@@ -47,3 +47,19 @@ redis:
     registry: docker.io
     repository: bitnamilegacy/redis
     tag: 8.2.1-debian-12-r0
+
+minio:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/minio
+    tag: 2025.7.23-debian-12-r3
+  clientImage:
+    registry: docker.io
+    repository: bitnamilegacy/minio-client
+    tag: 2025.7.21-debian-12-r2
+
+openldap:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/openldap
+    tag: latest
