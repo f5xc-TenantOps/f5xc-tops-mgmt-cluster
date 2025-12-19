@@ -52,14 +52,14 @@ minio:
   image:
     registry: docker.io
     repository: bitnamilegacy/minio
-    tag: 2025.7.23-debian-12-r3
+    tag: 2025.7.23-debian-12-r5
   clientImage:
     registry: docker.io
     repository: bitnamilegacy/minio-client
-    tag: 2025.7.21-debian-12-r2
+    tag: 2025.7.21-debian-12-r3
 
 openldap:
   image:
     registry: docker.io
     repository: bitnamilegacy/openldap
-    tag: latest
+    tag: 2.6.10-debian-12-r4
