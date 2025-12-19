@@ -28,6 +28,7 @@ spec:
       kind: StatefulSet
       jsonPointers:
         - /spec/volumeClaimTemplates/0/metadata/creationTimestamp
+        - /spec/volumeClaimTemplates/0/status
     - group: ""
       kind: Secret
       name: terrakube-postgresql
