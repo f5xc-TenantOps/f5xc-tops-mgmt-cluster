@@ -23,6 +23,10 @@ spec:
       kind: ReplicaSet
       jsonPointers:
         - /status
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates/0/metadata/creationTimestamp
   sources:
     - chart: terrakube
       repoURL: https://charts.terrakube.io
