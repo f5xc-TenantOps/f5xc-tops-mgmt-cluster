@@ -17,6 +17,7 @@ git config --global --add safe.directory /snap/microk8s/current/addons/community
 microk8s enable community
 microk8s enable cert-manager
 kubectl apply -f cert-manager-config.yml
+kubectl apply -f coredns-config.yml
 ```
 
 ## Enable/Configure Ingress 

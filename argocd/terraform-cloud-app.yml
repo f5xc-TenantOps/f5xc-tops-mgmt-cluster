@@ -8,8 +8,6 @@ spec:
   syncPolicy:
     automated: 
       prune: true
-    syncOptions:
-      - ServerSideApply=true
   destination:
     name: in-cluster
     namespace: tfc-operator-system
