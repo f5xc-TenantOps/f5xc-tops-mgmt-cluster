@@ -1,5 +1,7 @@
 global:
   name: terrakube
+  security:
+    allowInsecureImages: true
 
 security:
   adminGroup: "TERRAKUBE_ADMIN"
