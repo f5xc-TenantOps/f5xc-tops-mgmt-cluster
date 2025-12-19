@@ -4,10 +4,12 @@ global:
     allowInsecureImages: true
 
 security:
+  useOpenLDAP: true
   adminGroup: "TERRAKUBE_ADMIN"
   # patSecret and internalSecret are in pre-created K8s secret (see secrets.yml)
   dexClientId: "terrakube"
   dexClientScope: "email openid profile offline_access groups"
+  dexIssuerUri: "http://terrakube-dex.tops.k11s.io/dex"
 
 api:
   existingSecret: true
