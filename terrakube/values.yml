@@ -65,3 +65,48 @@ minio:
 openldap:
   image: "bitnamilegacy/openldap"
   version: "latest"
+
+dex:
+  config:
+    issuer: https://terrakube-dex.tops.k11s.io/dex
+    storage:
+      type: memory
+    web:
+      http: 0.0.0.0:5556
+      allowedOrigins: ['*']
+      skipApprovalScreen: true
+    oauth2:
+      responseTypes: ["code", "token", "id_token"]
+    connectors:
+    - type: ldap
+      name: OpenLDAP
+      id: ldap
+      config:
+        host: terrakube-openldap-service:1389
+        insecureNoSSL: true
+        bindDN: cn=admin,dc=example,dc=org
+        bindPW: admin
+        usernamePrompt: Email Address
+        userSearch:
+          baseDN: ou=users,dc=example,dc=org
+          filter: "(objectClass=person)"
+          username: mail
+          idAttr: DN
+          emailAttr: mail
+          nameAttr: cn
+        groupSearch:
+          baseDN: ou=Groups,dc=example,dc=org
+          filter: "(objectClass=groupOfNames)"
+          userMatchers:
+          - userAttr: DN
+            groupAttr: member
+          nameAttr: cn
+    staticClients:
+    - id: terrakube
+      redirectURIs:
+      - 'https://terrakube.tops.k11s.io'
+      - '/device/callback'
+      - 'http://localhost:10000/login'
+      - 'http://localhost:10001/login'
+      name: 'terrakube'
+      public: true
