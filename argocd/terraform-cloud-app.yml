@@ -10,10 +10,19 @@ spec:
       prune: true
     syncOptions:
       - ServerSideApply=true
-      - Replace=true
+      - RespectIgnoreDifferences=true
   destination:
     name: in-cluster
     namespace: tfc-operator-system
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: ReplicaSet
+      jsonPointers:
+        - /status
   sources:
     - chart: hcp-terraform-operator
       repoURL: https://helm.releases.hashicorp.com
