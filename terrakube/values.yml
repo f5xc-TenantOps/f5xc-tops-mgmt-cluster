@@ -39,27 +39,27 @@ postgresql:
   image:
     registry: docker.io
     repository: bitnamilegacy/postgresql
-    tag: 17.6.0-debian-12-r4
+    tag: latest
 
 redis:
   enabled: true
   image:
     registry: docker.io
     repository: bitnamilegacy/redis
-    tag: 8.2.1-debian-12-r0
+    tag: latest
 
 minio:
   image:
     registry: docker.io
     repository: bitnamilegacy/minio
-    tag: 2025.7.23-debian-12-r5
+    tag: latest
   clientImage:
     registry: docker.io
     repository: bitnamilegacy/minio-client
-    tag: 2025.7.21-debian-12-r3
+    tag: latest
 
 openldap:
   image:
     registry: docker.io
     repository: bitnamilegacy/openldap
-    tag: 2.6.10-debian-12-r4
+    tag: latest
