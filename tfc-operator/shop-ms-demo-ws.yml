@@ -3,6 +3,7 @@ apiVersion: app.terraform.io/v1alpha2
 kind: Workspace
 metadata:
   name: shop-microservices-demo
+  namespace: tfc-operator-system
 spec:
   organization: f5xc-tenant-ops
   terraformVersion: 1.6.2

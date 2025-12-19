@@ -1,5 +1,9 @@
-bootstrap-secrets.yml
+tfc-bootstrap.yml
+terrakube-bootstrap.yml
 argocd-config.yml
 argocd-ingress.yml
 cert-manager-config.yml
 coredns-config.yml
+
+.claude/
+docs/

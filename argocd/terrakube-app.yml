@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: terrakube
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+    syncOptions:
+      - ServerSideApply=true
+  destination:
+    name: in-cluster
+    namespace: terrakube
+  sources:
+    - chart: terrakube
+      repoURL: https://charts.terrakube.io
+      targetRevision: 3.21.0
+      helm:
+        valueFiles:
+          - $values/terrakube/values.yml
+    - repoURL: https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster.git
+      targetRevision: HEAD
+      path: terrakube
+      ref: values

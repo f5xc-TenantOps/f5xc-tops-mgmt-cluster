@@ -1,0 +1,41 @@
+global:
+  name: terrakube
+
+security:
+  adminGroup: "TERRAKUBE_ADMIN"
+  # patSecret and internalSecret are in pre-created K8s secret (see secrets.yml)
+  dexClientId: "terrakube"
+  dexClientScope: "email openid profile offline_access groups"
+
+api:
+  existingSecret: true
+  secrets:
+    - terrakube-api-secrets
+
+ingress:
+  useTls: false
+  ui:
+    enabled: true
+    domain: "terrakube.tops.k11s.io"
+    ingressClassName: "nginx"
+  api:
+    enabled: true
+    domain: "terrakube-api.tops.k11s.io"
+    ingressClassName: "nginx"
+  registry:
+    enabled: true
+    domain: "terrakube-registry.tops.k11s.io"
+    ingressClassName: "nginx"
+  dex:
+    enabled: true
+    domain: "terrakube-dex.tops.k11s.io"
+    ingressClassName: "nginx"
+
+storage:
+  defaultStorage: true
+
+postgresql:
+  enabled: true
+
+redis:
+  enabled: true
