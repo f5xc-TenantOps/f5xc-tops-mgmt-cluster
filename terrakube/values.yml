@@ -61,7 +61,5 @@ minio:
     tag: latest
 
 openldap:
-  image:
-    registry: docker.io
-    repository: bitnamilegacy/openldap
-    tag: latest
+  image: "bitnamilegacy/openldap"
+  version: "latest"
