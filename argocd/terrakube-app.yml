@@ -11,6 +11,7 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - RespectIgnoreDifferences=true
+      - CreateNamespace=true
   destination:
     name: in-cluster
     namespace: terrakube
