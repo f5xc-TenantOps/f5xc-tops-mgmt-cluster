@@ -14,7 +14,7 @@ api:
   existingSecret: false
 
 ingress:
-  useTls: false
+  useTls: true
   ui:
     enabled: true
     domain: "terrakube.tops.k11s.io"
