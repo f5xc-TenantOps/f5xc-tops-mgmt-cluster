@@ -26,8 +26,8 @@ spec:
         - /status
     - group: apps
       kind: StatefulSet
-      jqPathExpressions:
-        - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+      jsonPointers:
+        - /spec/volumeClaimTemplates/0/metadata/creationTimestamp
     - group: ""
       kind: Secret
       name: terrakube-postgresql
