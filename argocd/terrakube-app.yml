@@ -10,9 +10,19 @@ spec:
       prune: true
     syncOptions:
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
   destination:
     name: in-cluster
     namespace: terrakube
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: ReplicaSet
+      jsonPointers:
+        - /status
   sources:
     - chart: terrakube
       repoURL: https://charts.terrakube.io
