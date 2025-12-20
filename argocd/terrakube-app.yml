@@ -37,7 +37,7 @@ spec:
   sources:
     - chart: terrakube
       repoURL: https://charts.terrakube.io
-      targetRevision: 3.27.6
+      targetRevision: 4.5.1
       helm:
         valueFiles:
           - $values/terrakube/values.yml
