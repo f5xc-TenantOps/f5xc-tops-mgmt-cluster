@@ -8,7 +8,7 @@ security:
   adminGroup: "TERRAKUBE_ADMIN"
   dexClientId: "terrakube"
   dexClientScope: "email openid profile offline_access groups"
-  dexIssuerUri: "https://terrakube-dex.tops.k11s.io/dex"
+  dexIssuerUri: "https://terrakube-api.tops.k11s.io/dex"
 
 api:
   existingSecret: false
@@ -65,7 +65,7 @@ openldap:
 
 dex:
   config:
-    issuer: https://terrakube-dex.tops.k11s.io/dex
+    issuer: https://terrakube-api.tops.k11s.io/dex
     storage:
       type: memory
     web:
