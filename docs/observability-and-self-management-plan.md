@@ -132,11 +132,16 @@ argocd/
 
 See `observability-bootstrap.yml.example` for the template. Secrets required:
 
-| Secret Name | Keys | Used By |
-|-------------|------|---------|
-| `aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME | Vector (S3 log pull) |
-| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_API_URL, TENANT{1,2,3}_API_TOKEN | f5xc-prom-exporter |
-| `grafana-admin` | admin-user, admin-password | Grafana |
+| Secret Name | Keys | Created By | Used By |
+|-------------|------|------------|---------|
+| `aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION | Bootstrap | terraform/terrakube (to create S3/IAM) |
+| `vector-aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME | Terraform | Vector (S3 log pull) |
+| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_TENANT_URL, TENANT{1,2,3}_TOKEN | Bootstrap | f5xc-prom-exporter |
+| `grafana-admin` | admin-user, admin-password | Bootstrap | Grafana |
+
+**Note:** There are TWO AWS secrets:
+- `aws-credentials` - Bootstrap secret with permissions to CREATE S3/IAM resources
+- `vector-aws-credentials` - Created BY Terraform with read-only access for Vector
 
 ---
 
@@ -147,12 +152,12 @@ See `observability-bootstrap.yml.example` for the template. Secrets required:
 ```
 terraform/
 └── aws-monitoring-infra/
-    ├── main.tf
+    ├── providers.tf               # AWS + Kubernetes providers
     ├── variables.tf
     ├── outputs.tf
     ├── s3.tf                      # S3 bucket for Global Log Receivers
     ├── iam.tf                     # IAM user/policy for Vector
-    └── providers.tf
+    └── k8s-secret.tf              # Creates vector-aws-credentials secret
 ```
 
 ### Resources Created
@@ -163,7 +168,10 @@ terraform/
 
 2. **IAM User** - For Vector to pull logs
    - Policy: `s3:GetObject`, `s3:ListBucket` on the log bucket
-   - Static credentials (stored in observability-bootstrap.yml)
+
+3. **Kubernetes Secret** - `vector-aws-credentials` in `observability` namespace
+   - Contains IAM credentials + bucket name for Vector
+   - Annotated to prevent ArgoCD management (`argocd.argoproj.io/compare-options: IgnoreExtraneous`)
 
 ### Manual Step After Terraform Apply
 
@@ -173,59 +181,101 @@ Configure F5 XC Global Log Receivers to write to the created S3 bucket (manual v
 
 ## Part 3: Terrakube Self-Management
 
+### Architecture Overview
+
+Terrakube manages its own configuration through a two-tier organization structure:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         TERRAKUBE ORGANIZATIONS                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Org: terrakube (MANUAL - Bootstrap)                            │   │
+│  │  ────────────────────────────────────────────────────────────── │   │
+│  │  Workspace: terrakube-config                                    │   │
+│  │    • Path: terraform/terrakube/                                 │   │
+│  │    • Creates: infrastructure org, VCS connection, workspaces   │   │
+│  │    • Reads secrets from: terrakube namespace (k8s)             │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                              │                                          │
+│                              │ creates & manages                        │
+│                              ▼                                          │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │  Org: infrastructure (TERRAFORM-MANAGED)                        │   │
+│  │  ────────────────────────────────────────────────────────────── │   │
+│  │  Workspace: observability-aws                                   │   │
+│  │    • Path: terraform/aws-monitoring-infra/                      │   │
+│  │    • Creates: S3 bucket, IAM user for Vector                   │   │
+│  │    • Reads secrets from: observability namespace (k8s)         │   │
+│  │                                                                 │   │
+│  │  (Future workspaces added here via terraform)                   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 ### Bootstrap Problem
 
 Terrakube needs a workspace to run terraform, but we can't use terraform to create the initial workspace that runs itself. This requires a **manual bootstrap step**.
 
 ### Manual Bootstrap (One-Time Setup in Terrakube UI)
 
-1. **Create Organization** - e.g., `infrastructure`
-2. **Create SSH VCS Connection** - Deploy key for `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
-3. **Create Workspace: `terrakube-workspaces`**
-   - VCS: Point to `terraform/terrakube-workspaces/`
-   - Variables: `TERRAKUBE_TOKEN` (env, sensitive)
-4. **Create Workspace: `observability-aws`**
-   - VCS: Point to `terraform/aws-monitoring-infra/`
-   - Variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (env, sensitive)
+1. **Create Organization: `terrakube`**
+   - This org holds the bootstrap workspace that manages all other Terrakube config
 
-### Terraform Project (After Bootstrap)
+2. **Create SSH VCS Connection**
+   - Deploy key for `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
+   - No inbound internet required (polling-based)
 
-Once the bootstrap workspace exists, `terraform/terrakube-workspaces/` can manage additional resources:
+3. **Create Workspace: `terrakube-config`**
+   - VCS: Point to `terraform/terrakube/`
+   - No workspace variables needed - terraform reads secrets from Kubernetes
+
+### Terraform Project: `terraform/terrakube/`
+
+This terraform creates and manages the `infrastructure` org and its workspaces. It reads secrets directly from Kubernetes using the kubernetes provider.
 
 ```
 terraform/
-└── terrakube-workspaces/
-    ├── providers.tf               # terrakube provider
-    ├── variables.tf               # org ID, API token
-    ├── workspaces.tf              # Additional workspace definitions
-    └── outputs.tf
+└── terrakube/
+    ├── providers.tf               # terrakube + kubernetes providers
+    ├── variables.tf               # terrakube endpoint, org name, github repo
+    ├── secrets.tf                 # kubernetes_secret data sources
+    ├── infrastructure_org.tf      # Creates infrastructure org + VCS
+    ├── observability_workspace.tf # Creates observability-aws workspace
+    └── outputs.tf                 # Org ID, workspace ID, VCS ID
 ```
 
-### Workspaces
+### Secret Flow
 
-| Workspace | Created By | Path | Purpose |
-|-----------|------------|------|---------|
-| `terrakube-workspaces` | Manual (bootstrap) | `terraform/terrakube-workspaces` | Manages other workspaces |
-| `observability-aws` | Manual (bootstrap) | `terraform/aws-monitoring-infra` | S3 bucket, IAM for Vector |
-| Future workspaces | Terraform | Various | Managed by terrakube-workspaces |
+The terraform reads secrets from Kubernetes rather than Terrakube workspace variables:
+
+| Secret Source | Namespace | Keys | Used For |
+|---------------|-----------|------|----------|
+| `terrakube-api-secrets` | `terrakube` | TERRAKUBE_TOKEN | Terrakube provider auth |
+| `aws-credentials` | `observability` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION | Injected into observability-aws workspace |
+
+### Organizations & Workspaces
+
+| Organization | Workspace | Created By | Path | Purpose |
+|--------------|-----------|------------|------|---------|
+| `terrakube` | `terrakube-config` | Manual (bootstrap) | `terraform/terrakube/` | Manages infrastructure org |
+| `infrastructure` | `observability-aws` | Terraform | `terraform/aws-monitoring-infra/` | S3 bucket, IAM for Vector |
+| `infrastructure` | (future) | Terraform | Various | Additional infra workspaces |
 
 ### VCS Connection
 
 - **Method:** SSH deploy key (no inbound internet required)
 - **Polling:** Periodic (configured in Terrakube)
 - **Repository:** `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
+- **Created by:** `terraform/terrakube/` (shared by all workspaces in `infrastructure` org)
 
 ### Terrakube Secrets
 
 See `terrakube-bootstrap.yml.example` for the k8s secrets template.
 
-For Terrakube workspace variables (set in Terrakube UI):
-
-| Workspace | Variable | Type | Purpose |
-|-----------|----------|------|---------|
-| `terrakube-workspaces` | TERRAKUBE_TOKEN | env, sensitive | API token for provider |
-| `observability-aws` | AWS_ACCESS_KEY_ID | env, sensitive | AWS credentials |
-| `observability-aws` | AWS_SECRET_ACCESS_KEY | env, sensitive | AWS credentials |
+**Key difference from TFC operator pattern:** Secrets are stored in Kubernetes and read by terraform via the kubernetes provider, rather than being set as Terrakube workspace variables. This keeps sensitive data in the cluster and out of Terrakube's variable storage.
 
 ---
 
@@ -277,11 +327,10 @@ Since the production cluster points to `main` and there's no staging cluster for
 
 | Merge | Contents | Risk Level | Validation |
 |-------|----------|------------|------------|
-| **Merge 1** | Phase 0: bootstrap.md, bootstrap-ns.yml, example files, plan docs | Zero | Documentation only, no runtime impact |
-| **Merge 2** | Phase 1: observability/ directory, terraform/ directory, .gitignore, ArgoCD project | Low | New files only, nothing touches existing infrastructure |
-| **Merge 3** | Phase 2: AWS terraform + Phase 3: Observability ArgoCD apps | Medium | New namespace, validate each app syncs before proceeding |
-| **Merge 4** | Phase 4: Terrakube self-management | Medium | Most complex - verify workspace creation and VCS polling |
-| **Merge 5** | Phase 5: Dashboards & alerting | Low | Additive only |
+| **Merge 1** ✅ | Phase 0: bootstrap.md, bootstrap-ns.yml, example files, plan docs | Zero | Documentation only, no runtime impact |
+| **Merge 2** | Phase 1-2: terraform/ directory, observability ArgoCD apps | Low | New files only, nothing touches existing infrastructure |
+| **Merge 3** | Phase 3: Observability ArgoCD apps | Medium | New namespace, validate each app syncs before proceeding |
+| **Merge 4** | Phase 4: Dashboards & alerting | Low | Additive only |
 
 ### Safety Notes
 
@@ -302,45 +351,40 @@ If any merge causes issues:
 ## Implementation Order
 
 ### Phase 0: Documentation & Bootstrap Updates
-1. [ ] Update `bootstrap.md` to be cluster-agnostic (remove microk8s-specific instructions)
-2. [ ] Document cluster prerequisites (ArgoCD required, ingress/cert-manager recommended)
-3. [ ] Add namespace pre-creation to bootstrap process (terrakube, observability, tfc-operator-system)
-4. [ ] Document per-project bootstrap secrets pattern
+1. [x] Update `bootstrap.md` to be cluster-agnostic (remove microk8s-specific instructions)
+2. [x] Document cluster prerequisites (ArgoCD required, ingress/cert-manager recommended)
+3. [x] Add namespace pre-creation to bootstrap process (terrakube, observability, tfc-operator-system)
+4. [x] Document per-project bootstrap secrets pattern
 
 ### Phase 1: Foundation
-5. [ ] Create `observability/` directory structure
-6. [ ] Create `terraform/` directory structure
-7. [ ] Update `.gitignore` with new entries
-8. [ ] Create ArgoCD Project for observability
+5. [x] Create `observability/` directory structure
+6. [x] Create `terraform/` directory structure
+7. [x] Update `.gitignore` with new entries
+8. [x] Create ArgoCD Project for observability
 
 ### Phase 2: Terrakube Bootstrap & AWS Infrastructure
-9. [ ] Write `terraform/aws-monitoring-infra/` Terraform
-10. [ ] **Manual:** Create Terrakube org `infrastructure`
-11. [ ] **Manual:** Create SSH deploy key and VCS connection in Terrakube
-12. [ ] **Manual:** Create workspace `observability-aws` pointing to `terraform/aws-monitoring-infra/`
-13. [ ] **Manual:** Add AWS credentials as workspace variables
-14. [ ] Run Terraform to create S3 bucket and IAM user
-15. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
+9. [x] Write `terraform/aws-monitoring-infra/` Terraform
+10. [x] Write `terraform/terrakube/` Terraform (manages infrastructure org + workspaces)
+11. [ ] **Manual:** Create Terrakube org `terrakube`
+12. [ ] **Manual:** Create SSH deploy key and VCS connection in Terrakube
+13. [ ] **Manual:** Create workspace `terrakube-config` pointing to `terraform/terrakube/`
+14. [ ] Apply bootstrap secrets (`terrakube-bootstrap.yml`, `observability-bootstrap.yml`)
+15. [ ] Run Terrakube workspace to create infrastructure org and observability-aws workspace
+16. [ ] Run observability-aws workspace (creates S3 bucket, IAM user, and vector-aws-credentials secret)
+17. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
 
 ### Phase 3: Observability Components
-16. [ ] Create Prometheus ArgoCD App + values
-17. [ ] Create Loki ArgoCD App + values
-18. [ ] Create Vector ArgoCD App + values (configured for S3 source)
-19. [ ] Create Grafana ArgoCD App + values
-20. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
-21. [ ] Create `observability-bootstrap.yml` from terraform outputs and apply
+18. [ ] Create Prometheus ArgoCD App + values
+19. [ ] Create Loki ArgoCD App + values
+20. [ ] Create Vector ArgoCD App + values (configured for S3 source)
+21. [ ] Create Grafana ArgoCD App + values
+22. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
 
-### Phase 4: Terrakube Self-Management (Optional)
-22. [ ] Write `terraform/terrakube-workspaces/` Terraform
-23. [ ] **Manual:** Create workspace `terrakube-workspaces` pointing to `terraform/terrakube-workspaces/`
-24. [ ] **Manual:** Add TERRAKUBE_TOKEN as workspace variable
-25. [ ] Run Terraform to verify self-management works
-
-### Phase 5: Dashboards & Alerting
-26. [ ] Create Grafana dashboards for F5 XC metrics
-27. [ ] Create Grafana dashboards for cluster metrics
-28. [ ] Create Grafana dashboards for Lambda metrics
-29. [ ] Configure alerting rules in Prometheus
+### Phase 4: Dashboards & Alerting
+23. [ ] Create Grafana dashboards for F5 XC metrics
+24. [ ] Create Grafana dashboards for cluster metrics
+25. [ ] Create Grafana dashboards for Lambda metrics
+26. [ ] Configure alerting rules in Prometheus
 
 ---
 

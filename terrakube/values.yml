@@ -5,8 +5,10 @@ global:
     allowInsecureImages: true
 
 security:
-  useOpenLDAP: true
-  adminGroup: "TERRAKUBE_ADMIN"
+  # Disable OpenLDAP - using GitHub OAuth instead
+  useOpenLDAP: false
+  # Map GitHub team to admin group: f5xc-TenantOps:tenantops-admin
+  adminGroup: "f5xc-TenantOps:tenantops-admin"
   dexClientId: "terrakube"
   dexClientScope: "email openid profile offline_access groups"
   dexIssuerUri: "https://terrakube-api.tops.k11s.io/dex"
@@ -60,11 +62,17 @@ minio:
     repository: bitnamilegacy/minio-client
     tag: latest
 
-openldap:
-  image: "bitnamilegacy/openldap"
-  version: "latest"
+## OpenLDAP disabled - using GitHub OAuth
+# openldap:
+#   image: "bitnamilegacy/openldap"
+#   version: "latest"
 
 dex:
+  # Inject GitHub OAuth credentials from Kubernetes secret as environment variables
+  # Dex will expand $GITHUB_CLIENT_ID and $GITHUB_CLIENT_SECRET in connector config
+  envFrom:
+    - secretRef:
+        name: terrakube-github-oauth
   config:
     issuer: https://terrakube-api.tops.k11s.io/dex
     storage:
@@ -76,29 +84,24 @@ dex:
     oauth2:
       responseTypes: ["code", "token", "id_token"]
     connectors:
-    - type: ldap
-      name: OpenLDAP
-      id: ldap
+    - type: github
+      id: github
+      name: GitHub
       config:
-        host: terrakube-openldap-service:1389
-        insecureNoSSL: true
-        bindDN: cn=admin,dc=example,dc=org
-        bindPW: admin
-        usernamePrompt: Email Address
-        userSearch:
-          baseDN: ou=users,dc=example,dc=org
-          filter: "(objectClass=person)"
-          username: mail
-          idAttr: DN
-          emailAttr: mail
-          nameAttr: cn
-        groupSearch:
-          baseDN: ou=Groups,dc=example,dc=org
-          filter: "(objectClass=groupOfNames)"
-          userMatchers:
-          - userAttr: DN
-            groupAttr: member
-          nameAttr: cn
+        # Client credentials from terrakube-github-oauth secret
+        clientID: $GITHUB_CLIENT_ID
+        clientSecret: $GITHUB_CLIENT_SECRET
+        redirectURI: https://terrakube-api.tops.k11s.io/dex/callback
+        # Restrict to f5xc-TenantOps org members only
+        orgs:
+        - name: f5xc-TenantOps
+          teams:
+          - tenantops-admin
+        # Load all groups for team-based permissions
+        loadAllGroups: false
+        # Use slug format for team names (lowercase with hyphens)
+        teamNameField: slug
+        useLoginAsID: false
     staticClients:
     - id: terrakube
       redirectURIs:
