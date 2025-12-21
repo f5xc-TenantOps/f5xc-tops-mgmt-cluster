@@ -1,9 +1,18 @@
+# Bootstrap secrets (per-project)
 tfc-bootstrap.yml
 terrakube-bootstrap.yml
+observability-bootstrap.yml
+
+# Cluster-specific configuration
 argocd-config.yml
 argocd-ingress.yml
 cert-manager-config.yml
 coredns-config.yml
 
+# Claude Code
 .claude/
-docs/
+
+# Terraform state (managed by Terrakube, not stored locally)
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.backup

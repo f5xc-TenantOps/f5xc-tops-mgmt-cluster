@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -6,10 +7,10 @@ metadata:
 spec:
   project: default
   syncPolicy:
-    syncOptions:
-      - RespectIgnoreDifferences=true
     automated:
       prune: true
+    syncOptions:
+      - RespectIgnoreDifferences=true
   sources:
     - repoURL: https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster.git
       targetRevision: HEAD

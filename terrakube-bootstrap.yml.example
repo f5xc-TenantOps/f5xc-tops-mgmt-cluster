@@ -1,0 +1,30 @@
+# =============================================================================
+# Terrakube Bootstrap Secrets
+# =============================================================================
+#
+# Secrets for Terrakube self-hosted Terraform automation.
+#
+# Usage:
+#   cp terrakube-bootstrap.yml.example terrakube-bootstrap.yml
+#   # Edit terrakube-bootstrap.yml with real values
+#   kubectl apply -f terrakube-bootstrap.yml
+#
+# IMPORTANT: terrakube-bootstrap.yml is gitignored - never commit real secrets!
+#
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: terrakube-api-secrets
+  namespace: terrakube
+type: Opaque
+stringData:
+  # Terrakube API token (for self-management via Terraform)
+  TERRAKUBE_TOKEN: "<TERRAKUBE_API_TOKEN>"
+  # SSH deploy key for VCS polling (private key)
+  SSH_PRIVATE_KEY: |
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    <DEPLOY_KEY_FOR_THIS_REPO>
+    -----END OPENSSH PRIVATE KEY-----

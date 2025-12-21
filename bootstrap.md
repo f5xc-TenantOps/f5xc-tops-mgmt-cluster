@@ -1,47 +1,101 @@
-# 🥾 Bootstrap
+# Bootstrap
 
-## Install microk8s
+This guide covers bootstrapping a Kubernetes cluster to run the F5 XC TenantOps management stack.
+
+## Cluster Prerequisites
+
+### Required
+- Kubernetes cluster (any distribution: microk8s, k3s, EKS, GKE, AKS, etc.)
+- `kubectl` configured to access the cluster
+- ArgoCD installed and accessible
+
+### Recommended Components
+- **Ingress Controller** (e.g., nginx-ingress, traefik)
+  - Required for external access to UIs (ArgoCD, Terrakube, Grafana)
+- **cert-manager**
+  - Required for automatic TLS certificate management
+  - Configure a ClusterIssuer for your domain
+
+## Step 1: Create Namespaces
+
+All namespaces are defined in `bootstrap-ns.yml`. Apply first:
+
 ```shell
-sudo snap install microk8s --classic --channel=latest/stable
-sudo usermod -a -G microk8s $USER
-mkdir -p ~/.kube
-chmod 0700 ~/.kube
-su - $USER
+kubectl apply -f bootstrap-ns.yml
 ```
 
-## Enable microk8s addons
+This creates:
+- `argocd`
+- `terrakube`
+- `observability`
+- `tfc-operator-system`
+
+## Step 2: Apply Bootstrap Secrets
+
+Bootstrap secrets are organized by project. Each has a `.example` template in the repo.
+
+| File | Namespace | Purpose |
+|------|-----------|---------|
+| `tfc-bootstrap.yml` | `tfc-operator-system` | HCP Terraform operator credentials |
+| `terrakube-bootstrap.yml` | `terrakube` | Terrakube API and SSH keys |
+| `observability-bootstrap.yml` | `observability` | AWS, F5 XC, and Grafana credentials |
+
+Copy templates and fill in values:
+
 ```shell
-microk8s enable hostpath-storage
-sudo apt-get install git
-git config --global --add safe.directory /snap/microk8s/current/addons/community/.git
-microk8s enable community
-microk8s enable cert-manager
-kubectl apply -f cert-manager-config.yml
-kubectl apply -f coredns-config.yml
+cp tfc-bootstrap.yml.example tfc-bootstrap.yml
+cp terrakube-bootstrap.yml.example terrakube-bootstrap.yml
+cp observability-bootstrap.yml.example observability-bootstrap.yml
+# Edit each file with real values
 ```
 
-## Enable/Configure Ingress 
+Apply the secrets:
+
 ```shell
-microk8s enable ingress:default-ssl-certificate=kube-system/wildcard-k11s-io
+kubectl apply -f tfc-bootstrap.yml
+kubectl apply -f terrakube-bootstrap.yml
+kubectl apply -f observability-bootstrap.yml
 ```
 
-## Enable/Configure argocd
+> **Note:** These files are gitignored. Never commit real secrets.
+
+## Step 3: Configure ArgoCD
+
+Apply ArgoCD configuration and ingress (these files are gitignored, create from your environment):
+
 ```shell
-microk8s enable argocd
 kubectl replace -f argocd-config.yml
 kubectl apply -f argocd-ingress.yml
-argocd account update-password --account <new-account-name> --current-password <admin-password> --new-password <new-account-password>
 ```
 
-## Apply initial ArgoCD App
+Optionally update the admin password:
+
+```shell
+argocd account update-password \
+  --account <account-name> \
+  --current-password <admin-password> \
+  --new-password <new-password>
+```
+
+## Step 4: Apply Root ArgoCD Application
+
+The root application syncs all other applications:
+
 ```shell
 kubectl apply -f argocd/argocd-app.yml
 ```
 
-## Prepare the ``tfc-operator-system`` NS
+ArgoCD will now sync:
+- Terrakube
+- TFC Operator
+- Observability stack (Prometheus, Grafana, Loki, Vector)
+
+## Verification
+
+Check that all applications are synced:
+
 ```shell
-export NAMESPACE=tfc-operator-system
-kubectl create namespace $NAMESPACE
-kubectl -n $NAMESPACE apply -f bootstrap-secrets.yml
+kubectl get applications -n argocd
 ```
 
+All applications should show `Synced` and `Healthy` status.

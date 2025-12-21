@@ -1,0 +1,65 @@
+# =============================================================================
+# Observability Stack Bootstrap Secrets
+# =============================================================================
+#
+# Secrets for Prometheus, Grafana, Loki, Vector, and f5xc-prom-exporter.
+#
+# Usage:
+#   cp observability-bootstrap.yml.example observability-bootstrap.yml
+#   # Edit observability-bootstrap.yml with real values
+#   kubectl apply -f observability-bootstrap.yml
+#
+# IMPORTANT: observability-bootstrap.yml is gitignored - never commit real secrets!
+#
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: observability
+type: Opaque
+stringData:
+  # AWS credentials for Vector to pull logs from S3
+  # (Global Log Receiver bucket)
+  AWS_ACCESS_KEY_ID: "<VECTOR_S3_ACCESS_KEY_ID>"
+  AWS_SECRET_ACCESS_KEY: "<VECTOR_S3_SECRET_ACCESS_KEY>"
+  AWS_REGION: "<S3_BUCKET_REGION>"
+  S3_BUCKET_NAME: "<GLOBAL_LOG_RECEIVER_BUCKET_NAME>"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: f5xc-tenant-credentials
+  namespace: observability
+type: Opaque
+stringData:
+  # F5 XC API credentials for prometheus exporter
+  # These are used by f5xc-prom-exporter to scrape tenant metrics
+  #
+  # Tenant 1: MCN Lab
+  TENANT1_NAME: "mcn-lab"
+  TENANT1_API_URL: "https://<MCN_TENANT>.console.ves.volterra.io/api"
+  TENANT1_API_TOKEN: "<MCN_LAB_API_TOKEN>"
+  # Tenant 2: Security Lab
+  TENANT2_NAME: "sec-lab"
+  TENANT2_API_URL: "https://<SEC_TENANT>.console.ves.volterra.io/api"
+  TENANT2_API_TOKEN: "<SEC_LAB_API_TOKEN>"
+  # Tenant 3: App Lab
+  TENANT3_NAME: "app-lab"
+  TENANT3_API_URL: "https://<APP_TENANT>.console.ves.volterra.io/api"
+  TENANT3_API_TOKEN: "<APP_LAB_API_TOKEN>"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: observability
+type: Opaque
+stringData:
+  # Grafana admin credentials
+  admin-user: "admin"
+  admin-password: "<GRAFANA_ADMIN_PASSWORD>"

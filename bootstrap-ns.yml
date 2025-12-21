@@ -1,0 +1,42 @@
+# =============================================================================
+# Bootstrap Namespaces
+# =============================================================================
+#
+# Creates all namespaces required by this cluster.
+# Apply BEFORE bootstrap-secrets.yml and ArgoCD apps.
+#
+# Apply with: kubectl apply -f bootstrap-ns.yml
+#
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/name: argocd
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: terrakube
+  labels:
+    app.kubernetes.io/name: terrakube
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    app.kubernetes.io/name: observability
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tfc-operator-system
+  labels:
+    app.kubernetes.io/name: tfc-operator

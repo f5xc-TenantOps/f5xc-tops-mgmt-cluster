@@ -61,21 +61,21 @@ spec:
         secretKeyRef:
           name: tenant-tokens
           key: app_svc_cred_name
-    - name: zone_id   
+    - name: zone_id
       sensitive: true
       hcl: false
       valueFrom:
         secretKeyRef:
           name: workspacesecrets
           key: ZONE_ID
-    - name: acme_email   
+    - name: acme_email
       sensitive: true
       hcl: false
       valueFrom:
         secretKeyRef:
           name: workspacesecrets
           key: ACME_EMAIL
-    - name: udf_principal_org_path  
+    - name: udf_principal_org_path
       sensitive: true
       hcl: false
       valueFrom:

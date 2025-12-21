@@ -1,0 +1,74 @@
+# =============================================================================
+# TFC Operator Bootstrap Secrets
+# =============================================================================
+#
+# Secrets for HCP Terraform / Terraform Cloud Operator workspaces.
+#
+# Usage:
+#   cp tfc-bootstrap.yml.example tfc-bootstrap.yml
+#   # Edit tfc-bootstrap.yml with real values
+#   kubectl apply -f tfc-bootstrap.yml
+#
+# IMPORTANT: tfc-bootstrap.yml is gitignored - never commit real secrets!
+#
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: terraformrc
+  namespace: tfc-operator-system
+type: Opaque
+stringData:
+  # HCP Terraform / Terraform Cloud API token
+  token: "<TFC_API_TOKEN>"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tenant-tokens
+  namespace: tfc-operator-system
+type: Opaque
+stringData:
+  # F5 XC Tenant API Credentials
+  # MCN Lab Tenant
+  mcn_svc_cred: "<MCN_LAB_API_CREDENTIAL_P12_BASE64>"
+  mcn_svc_cred_name: "<MCN_LAB_API_CREDENTIAL_NAME>"
+  # Security Lab Tenant
+  sec_svc_cred: "<SEC_LAB_API_CREDENTIAL_P12_BASE64>"
+  sec_svc_cred_name: "<SEC_LAB_API_CREDENTIAL_NAME>"
+  # App Lab Tenant
+  app_svc_cred: "<APP_LAB_API_CREDENTIAL_P12_BASE64>"
+  app_svc_cred_name: "<APP_LAB_API_CREDENTIAL_NAME>"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workspacesecrets
+  namespace: tfc-operator-system
+type: Opaque
+stringData:
+  # AWS Credentials (for TFC workspaces)
+  AWS_ACCESS_KEY_ID: "<AWS_ACCESS_KEY_ID>"
+  AWS_SECRET_ACCESS_KEY: "<AWS_SECRET_ACCESS_KEY>"
+  # Cloudflare
+  ZONE_ID: "<CLOUDFLARE_ZONE_ID>"
+  ACME_EMAIL: "<ACME_EMAIL_ADDRESS>"
+  # UDF
+  UDF_PRINCIPAL_ORG_PATH: "<UDF_PRINCIPAL_ORG_PATH>"
+  # GCP (for shop-microservices-demo workspace)
+  GCP_PROJECT_ID: "<GCP_PROJECT_ID>"
+  GCP_CREDENTIALS: |
+    {
+      "type": "service_account",
+      "project_id": "<PROJECT_ID>",
+      "private_key_id": "<KEY_ID>",
+      "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "client_email": "<SERVICE_ACCOUNT_EMAIL>",
+      "client_id": "<CLIENT_ID>",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token"
+    }
