@@ -87,9 +87,10 @@ cp observability-bootstrap.yml.example observability-bootstrap.yml
 | `terrakube-api-secrets` | `TERRAKUBE_TOKEN` | Terrakube API token (for self-management) |
 | `terrakube-api-secrets` | `SSH_PRIVATE_KEY` | SSH deploy key for VCS polling |
 
-To generate the SSH deploy key (Terrakube requires RSA keys):
+To generate the SSH deploy key (Terrakube requires RSA in PEM format):
 ```shell
-ssh-keygen -t rsa -b 4096 -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
+# Verify the key starts with "-----BEGIN RSA PRIVATE KEY-----" (not "BEGIN OPENSSH")
 # Add terrakube-deploy-key.pub as a deploy key in GitHub
 # Copy contents of terrakube-deploy-key into SSH_PRIVATE_KEY
 ```
