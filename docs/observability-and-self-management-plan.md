@@ -264,14 +264,15 @@ See `bootstrap-secrets.yml.example` for the complete template. Secrets required:
 
 ### Update `.gitignore`
 
-Add entry to ignore terraform directory (bootstrap-secrets.yml already gitignored):
+Replace the old separate bootstrap files with a single consolidated entry and add terraform:
 
-```
-# Existing (consolidate to single bootstrap-secrets.yml)
-bootstrap-secrets.yml
-
-# New
-terraform/
+```diff
+- tfc-bootstrap.yml
+- terrakube-bootstrap.yml
++ bootstrap-secrets.yml
++
++ # Terraform managed by Terrakube
++ terraform/
 ```
 
 ### ArgoCD Project Definition (`argocd/observability-project.yml`)
