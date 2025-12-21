@@ -136,7 +136,7 @@ See `observability-bootstrap.yml.example` for the template. Secrets required:
 |-------------|------|------------|---------|
 | `aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION | Bootstrap | terraform/terrakube (to create S3/IAM) |
 | `vector-aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME | Terraform | Vector (S3 log pull) |
-| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_API_URL, TENANT{1,2,3}_API_TOKEN | Bootstrap | f5xc-prom-exporter |
+| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_TENANT_URL, TENANT{1,2,3}_TOKEN | Bootstrap | f5xc-prom-exporter |
 | `grafana-admin` | admin-user, admin-password | Bootstrap | Grafana |
 
 **Note:** There are TWO AWS secrets:

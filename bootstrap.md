@@ -87,9 +87,9 @@ cp observability-bootstrap.yml.example observability-bootstrap.yml
 | `terrakube-api-secrets` | `TERRAKUBE_TOKEN` | Terrakube API token (for self-management) |
 | `terrakube-api-secrets` | `SSH_PRIVATE_KEY` | SSH deploy key for VCS polling |
 
-To generate the SSH deploy key:
+To generate the SSH deploy key (Terrakube requires RSA keys):
 ```shell
-ssh-keygen -t ed25519 -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
+ssh-keygen -t rsa -b 4096 -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
 # Add terrakube-deploy-key.pub as a deploy key in GitHub
 # Copy contents of terrakube-deploy-key into SSH_PRIVATE_KEY
 ```
@@ -102,8 +102,8 @@ ssh-keygen -t ed25519 -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
 | `aws-credentials` | `AWS_SECRET_ACCESS_KEY` | AWS secret key |
 | `aws-credentials` | `AWS_REGION` | AWS region (e.g., us-east-1) |
 | `f5xc-tenant-credentials` | `TENANT1_NAME` | First tenant name (e.g., "mcn-lab") |
-| `f5xc-tenant-credentials` | `TENANT1_API_URL` | First tenant API URL |
-| `f5xc-tenant-credentials` | `TENANT1_API_TOKEN` | First tenant API token |
+| `f5xc-tenant-credentials` | `TENANT1_TENANT_URL` | First tenant URL (e.g., https://tenant.console.ves.volterra.io) |
+| `f5xc-tenant-credentials` | `TENANT1_TOKEN` | First tenant API token |
 | `f5xc-tenant-credentials` | `TENANT2_*` | Second tenant credentials |
 | `f5xc-tenant-credentials` | `TENANT3_*` | Third tenant credentials |
 | `grafana-admin` | `admin-user` | Grafana admin username |

@@ -49,16 +49,16 @@ stringData:
   #
   # Tenant 1: MCN Lab
   TENANT1_NAME: "mcn-lab"
-  TENANT1_API_URL: "https://<MCN_TENANT>.console.ves.volterra.io/api"
-  TENANT1_API_TOKEN: "<MCN_LAB_API_TOKEN>"
+  TENANT1_TENANT_URL: "https://<MCN_TENANT>.console.ves.volterra.io"
+  TENANT1_TOKEN: "<MCN_LAB_API_TOKEN>"
   # Tenant 2: Security Lab
   TENANT2_NAME: "sec-lab"
-  TENANT2_API_URL: "https://<SEC_TENANT>.console.ves.volterra.io/api"
-  TENANT2_API_TOKEN: "<SEC_LAB_API_TOKEN>"
+  TENANT2_TENANT_URL: "https://<SEC_TENANT>.console.ves.volterra.io"
+  TENANT2_TOKEN: "<SEC_LAB_API_TOKEN>"
   # Tenant 3: App Lab
   TENANT3_NAME: "app-lab"
-  TENANT3_API_URL: "https://<APP_TENANT>.console.ves.volterra.io/api"
-  TENANT3_API_TOKEN: "<APP_LAB_API_TOKEN>"
+  TENANT3_TENANT_URL: "https://<APP_TENANT>.console.ves.volterra.io"
+  TENANT3_TOKEN: "<APP_LAB_API_TOKEN>"
 
 ---
 apiVersion: v1
