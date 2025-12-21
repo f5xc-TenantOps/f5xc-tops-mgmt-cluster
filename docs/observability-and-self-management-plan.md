@@ -43,28 +43,25 @@ kubectl apply -f bootstrap-ns.yml
 This creates: argocd, terrakube, observability, tfc-operator-system
 
 ### Bootstrap Secrets
-All bootstrap secrets are consolidated in a single gitignored file at the repo root.
+Bootstrap secrets are organized by project, with one file per component:
 
-**Template:** `bootstrap-secrets.yml.example` (committed - copy and fill in values)
-**Actual:** `bootstrap-secrets.yml` (gitignored - never commit!)
+| File | Namespace | Secrets |
+|------|-----------|---------|
+| `tfc-bootstrap.yml` | `tfc-operator-system` | terraformrc, tenant-tokens, workspacesecrets |
+| `terrakube-bootstrap.yml` | `terrakube` | terrakube-api-secrets |
+| `observability-bootstrap.yml` | `observability` | aws-credentials, f5xc-tenant-credentials, grafana-admin |
 
-Namespaces and secrets included:
+Each has a `.example` template committed to the repo. Copy and fill in values:
 
-| Namespace | Secrets |
-|-----------|---------|
-| `tfc-operator-system` | terraformrc, tenant-tokens, workspacesecrets |
-| `terrakube` | terrakube-api-secrets |
-| `observability` | aws-credentials, f5xc-tenant-credentials, grafana-admin |
-| `argocd` | argocd-initial-admin (optional) |
-
-Apply before ArgoCD syncs:
-cp bootstrap-secrets.yml.example bootstrap-secrets.yml
-# Edit bootstrap-secrets.yml with real values
-kubectl apply -f bootstrap-secrets.yml
+cp tfc-bootstrap.yml.example tfc-bootstrap.yml
+cp terrakube-bootstrap.yml.example terrakube-bootstrap.yml
+cp observability-bootstrap.yml.example observability-bootstrap.yml
+# Edit each file with real values
+kubectl apply -f tfc-bootstrap.yml -f terrakube-bootstrap.yml -f observability-bootstrap.yml
 
 ### ArgoCD Initial Setup
 1. Apply namespaces: `kubectl apply -f bootstrap-ns.yml`
-2. Apply bootstrap secrets: `kubectl apply -f bootstrap-secrets.yml`
+2. Apply bootstrap secrets: `kubectl apply -f tfc-bootstrap.yml -f terrakube-bootstrap.yml -f observability-bootstrap.yml`
 3. Configure ArgoCD (replace config, apply ingress)
 4. Apply the root ArgoCD app: `kubectl apply -f argocd/argocd-app.yml`
 5. ArgoCD will sync all other applications
@@ -133,7 +130,7 @@ argocd/
 
 ### Observability Secrets
 
-See `bootstrap-secrets.yml.example` for the complete template. Secrets required:
+See `observability-bootstrap.yml.example` for the template. Secrets required:
 
 | Secret Name | Keys | Used By |
 |-------------|------|---------|
@@ -166,7 +163,7 @@ terraform/
 
 2. **IAM User** - For Vector to pull logs
    - Policy: `s3:GetObject`, `s3:ListBucket` on the log bucket
-   - Static credentials (stored in bootstrap-secrets.yml)
+   - Static credentials (stored in observability-bootstrap.yml)
 
 ### Manual Step After Terraform Apply
 
@@ -252,7 +249,7 @@ resource "terrakube_workspace_variable" "aws_access_key" {
 
 ### Terrakube Secrets
 
-See `bootstrap-secrets.yml.example` for the complete template. Secrets required:
+See `terrakube-bootstrap.yml.example` for the template. Secrets required:
 
 | Secret Name | Keys | Used By |
 |-------------|------|---------|
@@ -264,12 +261,12 @@ See `bootstrap-secrets.yml.example` for the complete template. Secrets required:
 
 ### Update `.gitignore`
 
-Replace the old separate bootstrap files with a single consolidated entry and add terraform:
+Keep the existing bootstrap file entries and add terraform + observability:
 
 ```diff
-- tfc-bootstrap.yml
-- terrakube-bootstrap.yml
-+ bootstrap-secrets.yml
+  tfc-bootstrap.yml
+  terrakube-bootstrap.yml
++ observability-bootstrap.yml
 +
 + # Terraform managed by Terrakube
 + terraform/
@@ -306,7 +303,7 @@ spec:
 1. [ ] Update `bootstrap.md` to be cluster-agnostic (remove microk8s-specific instructions)
 2. [ ] Document cluster prerequisites (ArgoCD required, ingress/cert-manager recommended)
 3. [ ] Add namespace pre-creation to bootstrap process (terrakube, observability, tfc-operator-system)
-4. [ ] Document consolidated `bootstrap-secrets.yml` pattern
+4. [ ] Document per-project bootstrap secrets pattern
 
 ### Phase 1: Foundation
 5. [ ] Create `observability/` directory structure
@@ -326,12 +323,12 @@ spec:
 15. [ ] Create Vector ArgoCD App + values (configured for S3 source)
 16. [ ] Create Grafana ArgoCD App + values
 17. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
-18. [ ] Add observability secrets to `bootstrap-secrets.yml` and apply
+18. [ ] Create `observability-bootstrap.yml` from example and apply
 
 ### Phase 4: Terrakube Self-Management
 19. [ ] Write `terraform/terrakube-workspaces/` Terraform
 20. [ ] Create SSH deploy key for this repo
-21. [ ] Add terrakube secrets (SSH key) to `bootstrap-secrets.yml` and apply
+21. [ ] Update `terrakube-bootstrap.yml` with SSH key and apply
 22. [ ] Bootstrap `terrakube-self` workspace (manual first run)
 23. [ ] Verify self-management loop works
 
