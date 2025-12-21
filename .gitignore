@@ -6,4 +6,3 @@ cert-manager-config.yml
 coredns-config.yml
 
 .claude/
-docs/

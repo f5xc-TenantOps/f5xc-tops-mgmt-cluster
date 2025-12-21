@@ -1,3 +1,4 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -40,7 +41,7 @@ spec:
       targetRevision: 4.5.1
       helm:
         valueFiles:
-          - $values/terrakube/values.yml
+        - $values/terrakube/values.yml
     - repoURL: https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster.git
       targetRevision: HEAD
       path: terrakube

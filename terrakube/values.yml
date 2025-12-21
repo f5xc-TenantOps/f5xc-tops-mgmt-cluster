@@ -1,3 +1,4 @@
+---
 global:
   name: terrakube
   security:
@@ -70,7 +71,7 @@ dex:
       type: memory
     web:
       http: 0.0.0.0:5556
-      allowedOrigins: ['*']
+      allowedOrigins: ["*"]
       skipApprovalScreen: true
     oauth2:
       responseTypes: ["code", "token", "id_token"]
@@ -101,9 +102,9 @@ dex:
     staticClients:
     - id: terrakube
       redirectURIs:
-      - 'https://terrakube.tops.k11s.io'
-      - '/device/callback'
-      - 'http://localhost:10000/login'
-      - 'http://localhost:10001/login'
-      name: 'terrakube'
+      - "https://terrakube.tops.k11s.io"
+      - "/device/callback"
+      - "http://localhost:10000/login"
+      - "http://localhost:10001/login"
+      name: "terrakube"
       public: true
