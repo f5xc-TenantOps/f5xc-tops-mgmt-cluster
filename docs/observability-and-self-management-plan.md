@@ -297,6 +297,36 @@ spec:
 
 ---
 
+## Deployment Strategy
+
+Since the production cluster points to `main` and there's no staging cluster for validation, we'll use an **incremental merge strategy** to minimize risk:
+
+### Merge Order (staging → main)
+
+| Merge | Contents | Risk Level | Validation |
+|-------|----------|------------|------------|
+| **Merge 1** | Phase 0: bootstrap.md, bootstrap-ns.yml, example files, plan docs | Zero | Documentation only, no runtime impact |
+| **Merge 2** | Phase 1: observability/ directory, terraform/ directory, .gitignore, ArgoCD project | Low | New files only, nothing touches existing infrastructure |
+| **Merge 3** | Phase 2: AWS terraform + Phase 3: Observability ArgoCD apps | Medium | New namespace, validate each app syncs before proceeding |
+| **Merge 4** | Phase 4: Terrakube self-management | Medium | Most complex - verify workspace creation and VCS polling |
+| **Merge 5** | Phase 5: Dashboards & alerting | Low | Additive only |
+
+### Safety Notes
+
+- **tfc-operator is safe**: Existing workspaces in `tfc-operator/` are unchanged (only YAML formatting cleanup)
+- **Observability is additive**: New namespace, new apps - doesn't touch tfc-operator
+- **.gitignore preserves existing entries**: We keep `tfc-bootstrap.yml` and `terrakube-bootstrap.yml`, only adding `observability-bootstrap.yml`
+- **Validate between merges**: After each merge to main, verify ArgoCD syncs successfully before proceeding
+
+### Rollback Plan
+
+If any merge causes issues:
+1. ArgoCD apps can be deleted without affecting other workloads
+2. Namespaces can be deleted to clean up completely
+3. Git revert on main if needed (infrastructure is declarative)
+
+---
+
 ## Implementation Order
 
 ### Phase 0: Documentation & Bootstrap Updates
