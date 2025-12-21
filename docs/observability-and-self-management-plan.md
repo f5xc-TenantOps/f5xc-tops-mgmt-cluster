@@ -351,16 +351,16 @@ If any merge causes issues:
 ## Implementation Order
 
 ### Phase 0: Documentation & Bootstrap Updates
-1. [ ] Update `bootstrap.md` to be cluster-agnostic (remove microk8s-specific instructions)
-2. [ ] Document cluster prerequisites (ArgoCD required, ingress/cert-manager recommended)
-3. [ ] Add namespace pre-creation to bootstrap process (terrakube, observability, tfc-operator-system)
-4. [ ] Document per-project bootstrap secrets pattern
+1. [x] Update `bootstrap.md` to be cluster-agnostic (remove microk8s-specific instructions)
+2. [x] Document cluster prerequisites (ArgoCD required, ingress/cert-manager recommended)
+3. [x] Add namespace pre-creation to bootstrap process (terrakube, observability, tfc-operator-system)
+4. [x] Document per-project bootstrap secrets pattern
 
 ### Phase 1: Foundation
-5. [ ] Create `observability/` directory structure
-6. [ ] Create `terraform/` directory structure
-7. [ ] Update `.gitignore` with new entries
-8. [ ] Create ArgoCD Project for observability
+5. [x] Create `observability/` directory structure
+6. [x] Create `terraform/` directory structure
+7. [x] Update `.gitignore` with new entries
+8. [x] Create ArgoCD Project for observability
 
 ### Phase 2: Terrakube Bootstrap & AWS Infrastructure
 9. [x] Write `terraform/aws-monitoring-infra/` Terraform
