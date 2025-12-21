@@ -173,87 +173,59 @@ Configure F5 XC Global Log Receivers to write to the created S3 bucket (manual v
 
 ## Part 3: Terrakube Self-Management
 
-### Terraform Project
+### Bootstrap Problem
+
+Terrakube needs a workspace to run terraform, but we can't use terraform to create the initial workspace that runs itself. This requires a **manual bootstrap step**.
+
+### Manual Bootstrap (One-Time Setup in Terrakube UI)
+
+1. **Create Organization** - e.g., `infrastructure`
+2. **Create SSH VCS Connection** - Deploy key for `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
+3. **Create Workspace: `terrakube-workspaces`**
+   - VCS: Point to `terraform/terrakube-workspaces/`
+   - Variables: `TERRAKUBE_TOKEN` (env, sensitive)
+4. **Create Workspace: `observability-aws`**
+   - VCS: Point to `terraform/aws-monitoring-infra/`
+   - Variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (env, sensitive)
+
+### Terraform Project (After Bootstrap)
+
+Once the bootstrap workspace exists, `terraform/terrakube-workspaces/` can manage additional resources:
 
 ```
 terraform/
 └── terrakube-workspaces/
-    ├── main.tf
-    ├── variables.tf
-    ├── outputs.tf
-    ├── providers.tf               # terrakube + kubernetes providers
-    ├── workspaces.tf              # Workspace definitions
-    └── vcs.tf                     # VCS connection (SSH)
+    ├── providers.tf               # terrakube provider
+    ├── variables.tf               # org ID, API token
+    ├── workspaces.tf              # Additional workspace definitions
+    └── outputs.tf
 ```
 
-### Providers
+### Workspaces
 
-```hcl
-terraform {
-  required_providers {
-    terrakube = {
-      source  = "AzBuilder/terrakube"
-      version = "~> 1.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
-  }
-}
-
-provider "kubernetes" {
-  # Uses in-cluster config when running in Terrakube
-  config_path = "~/.kube/config"  # For local dev
-}
-
-provider "terrakube" {
-  endpoint = "https://terrakube-api.tops.k11s.io"
-  token    = var.terrakube_token
-}
-```
-
-### Workspaces Managed
-
-| Workspace | Repository | Purpose |
-|-----------|------------|---------|
-| `terrakube-self` | `f5xc-TenantOps/f5xc-tops-mgmt-cluster` (path: `terraform/terrakube-workspaces`) | Manages Terrakube workspaces, variables, VCS connections |
-| `aws-monitoring-infra` | `f5xc-TenantOps/f5xc-tops-mgmt-cluster` (path: `terraform/aws-monitoring-infra`) | S3 bucket, IAM for observability |
+| Workspace | Created By | Path | Purpose |
+|-----------|------------|------|---------|
+| `terrakube-workspaces` | Manual (bootstrap) | `terraform/terrakube-workspaces` | Manages other workspaces |
+| `observability-aws` | Manual (bootstrap) | `terraform/aws-monitoring-infra` | S3 bucket, IAM for Vector |
+| Future workspaces | Terraform | Various | Managed by terrakube-workspaces |
 
 ### VCS Connection
 
-- **Method:** SSH key (no inbound internet required)
+- **Method:** SSH deploy key (no inbound internet required)
 - **Polling:** Periodic (configured in Terrakube)
 - **Repository:** `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
 
-### Kubernetes Provider Usage
-
-The kubernetes provider pulls secrets from the cluster into Terrakube workspace variables:
-
-```hcl
-data "kubernetes_secret" "aws_credentials" {
-  metadata {
-    name      = "aws-credentials"
-    namespace = "observability"
-  }
-}
-
-resource "terrakube_workspace_variable" "aws_access_key" {
-  workspace_id = terrakube_workspace.aws_monitoring.id
-  key          = "AWS_ACCESS_KEY_ID"
-  value        = data.kubernetes_secret.aws_credentials.data["AWS_ACCESS_KEY_ID"]
-  category     = "ENV"
-  sensitive    = true
-}
-```
-
 ### Terrakube Secrets
 
-See `terrakube-bootstrap.yml.example` for the template. Secrets required:
+See `terrakube-bootstrap.yml.example` for the k8s secrets template.
 
-| Secret Name | Keys | Used By |
-|-------------|------|---------|
-| `terrakube-api-secrets` | TERRAKUBE_TOKEN, SSH_PRIVATE_KEY | Terrakube self-management |
+For Terrakube workspace variables (set in Terrakube UI):
+
+| Workspace | Variable | Type | Purpose |
+|-----------|----------|------|---------|
+| `terrakube-workspaces` | TERRAKUBE_TOKEN | env, sensitive | API token for provider |
+| `observability-aws` | AWS_ACCESS_KEY_ID | env, sensitive | AWS credentials |
+| `observability-aws` | AWS_SECRET_ACCESS_KEY | env, sensitive | AWS credentials |
 
 ---
 
@@ -341,32 +313,34 @@ If any merge causes issues:
 7. [ ] Update `.gitignore` with new entries
 8. [ ] Create ArgoCD Project for observability
 
-### Phase 2: AWS Infrastructure
+### Phase 2: Terrakube Bootstrap & AWS Infrastructure
 9. [ ] Write `terraform/aws-monitoring-infra/` Terraform
-10. [ ] Bootstrap Terrakube workspace for AWS infra (manual first run)
-11. [ ] Apply Terraform to create S3 bucket and IAM user
-12. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
+10. [ ] **Manual:** Create Terrakube org `infrastructure`
+11. [ ] **Manual:** Create SSH deploy key and VCS connection in Terrakube
+12. [ ] **Manual:** Create workspace `observability-aws` pointing to `terraform/aws-monitoring-infra/`
+13. [ ] **Manual:** Add AWS credentials as workspace variables
+14. [ ] Run Terraform to create S3 bucket and IAM user
+15. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
 
 ### Phase 3: Observability Components
-13. [ ] Create Prometheus ArgoCD App + values
-14. [ ] Create Loki ArgoCD App + values
-15. [ ] Create Vector ArgoCD App + values (configured for S3 source)
-16. [ ] Create Grafana ArgoCD App + values
-17. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
-18. [ ] Create `observability-bootstrap.yml` from example and apply
+16. [ ] Create Prometheus ArgoCD App + values
+17. [ ] Create Loki ArgoCD App + values
+18. [ ] Create Vector ArgoCD App + values (configured for S3 source)
+19. [ ] Create Grafana ArgoCD App + values
+20. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
+21. [ ] Create `observability-bootstrap.yml` from terraform outputs and apply
 
-### Phase 4: Terrakube Self-Management
-19. [ ] Write `terraform/terrakube-workspaces/` Terraform
-20. [ ] Create SSH deploy key for this repo
-21. [ ] Update `terrakube-bootstrap.yml` with SSH key and apply
-22. [ ] Bootstrap `terrakube-self` workspace (manual first run)
-23. [ ] Verify self-management loop works
+### Phase 4: Terrakube Self-Management (Optional)
+22. [ ] Write `terraform/terrakube-workspaces/` Terraform
+23. [ ] **Manual:** Create workspace `terrakube-workspaces` pointing to `terraform/terrakube-workspaces/`
+24. [ ] **Manual:** Add TERRAKUBE_TOKEN as workspace variable
+25. [ ] Run Terraform to verify self-management works
 
 ### Phase 5: Dashboards & Alerting
-24. [ ] Create Grafana dashboards for F5 XC metrics
-25. [ ] Create Grafana dashboards for cluster metrics
-26. [ ] Create Grafana dashboards for Lambda metrics
-27. [ ] Configure alerting rules in Prometheus
+26. [ ] Create Grafana dashboards for F5 XC metrics
+27. [ ] Create Grafana dashboards for cluster metrics
+28. [ ] Create Grafana dashboards for Lambda metrics
+29. [ ] Configure alerting rules in Prometheus
 
 ---
 
