@@ -2,19 +2,33 @@
 # Contains workspaces for AWS infrastructure, and later tfc-operator migrations
 
 resource "terrakube_organization" "infrastructure" {
-  name        = "infrastructure"
-  description = "Infrastructure workspaces for observability, and future tfc-operator migrations"
+  name           = "infrastructure"
+  description    = "Infrastructure workspaces for observability, and future tfc-operator migrations"
+  execution_mode = "remote"
 }
 
-# VCS connection for this repository
-# Note: The SSH key must be manually added to Terrakube and GitHub
-resource "terrakube_vcs" "github" {
+# SSH key for private repository access
+resource "terrakube_ssh" "github_deploy_key" {
   organization_id = terrakube_organization.infrastructure.id
-  name            = "f5xc-tops-mgmt-cluster"
-  description     = "Management cluster repository"
-  vcs_type        = "GITHUB"
+  name            = "github-deploy-key"
+  description     = "Deploy key for f5xc-tops-mgmt-cluster repository"
+  private_key     = data.kubernetes_secret.terrakube_api.data["SSH_PRIVATE_KEY"]
+  ssh_type        = "rsa"
+}
 
-  # SSH connection (no inbound internet required)
-  # The SSH private key is stored in Terrakube, public key as GitHub deploy key
-  ssh_private_key = data.kubernetes_secret.terrakube_api.data["SSH_PRIVATE_KEY"]
+# Default template for Plan and Apply workflow
+resource "terrakube_organization_template" "plan_apply" {
+  name            = "Plan and Apply"
+  organization_id = terrakube_organization.infrastructure.id
+  description     = "Standard Terraform plan and apply workflow"
+  version         = "1.0.0"
+  content         = <<-EOF
+flow:
+  - type: "terraformPlan"
+    name: "Plan"
+    step: 100
+  - type: "terraformApply"
+    name: "Apply"
+    step: 200
+EOF
 }
