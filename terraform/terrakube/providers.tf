@@ -4,7 +4,7 @@ terraform {
   required_providers {
     terrakube = {
       source  = "AzBuilder/terrakube"
-      version = "~> 1.0"
+      version = "~> 0.21"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
