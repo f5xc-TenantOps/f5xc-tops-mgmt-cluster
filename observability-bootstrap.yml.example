@@ -2,7 +2,11 @@
 # Observability Stack Bootstrap Secrets
 # =============================================================================
 #
-# Secrets for Prometheus, Grafana, Loki, Vector, and f5xc-prom-exporter.
+# Secrets for Grafana and f5xc-prom-exporter.
+#
+# NOTE: Vector AWS credentials are NOT in this file. They are created
+# automatically by terraform/aws-monitoring-infra/ as a Kubernetes secret
+# named "vector-aws-credentials" in the observability namespace.
 #
 # Usage:
 #   cp observability-bootstrap.yml.example observability-bootstrap.yml
@@ -12,28 +16,6 @@
 # IMPORTANT: observability-bootstrap.yml is gitignored - never commit real secrets!
 #
 # =============================================================================
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-credentials
-  namespace: observability
-type: Opaque
-stringData:
-  # AWS credentials used for:
-  # 1. Terrakube to run terraform/aws-monitoring-infra (creates S3 bucket + IAM)
-  # 2. Vector to pull logs from S3 (after terraform creates the bucket)
-  #
-  # For initial setup, use credentials with permissions to create S3 + IAM.
-  # After terraform runs, you can update these to the Vector-specific credentials
-  # from terraform output, or keep using the same credentials if they have
-  # s3:GetObject/s3:ListBucket permissions.
-  AWS_ACCESS_KEY_ID: "<AWS_ACCESS_KEY_ID>"
-  AWS_SECRET_ACCESS_KEY: "<AWS_SECRET_ACCESS_KEY>"
-  AWS_REGION: "<AWS_REGION>"
-  # S3_BUCKET_NAME is populated after terraform creates the bucket
-  S3_BUCKET_NAME: "<GLOBAL_LOG_RECEIVER_BUCKET_NAME>"
 
 ---
 apiVersion: v1

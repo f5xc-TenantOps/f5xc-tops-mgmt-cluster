@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -20,3 +24,6 @@ provider "aws" {
     }
   }
 }
+
+# Kubernetes provider uses in-cluster config when running in Terrakube
+provider "kubernetes" {}

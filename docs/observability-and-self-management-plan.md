@@ -132,11 +132,13 @@ argocd/
 
 See `observability-bootstrap.yml.example` for the template. Secrets required:
 
-| Secret Name | Keys | Used By |
-|-------------|------|---------|
-| `aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME | Vector (S3 log pull) |
-| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_API_URL, TENANT{1,2,3}_API_TOKEN | f5xc-prom-exporter |
-| `grafana-admin` | admin-user, admin-password | Grafana |
+| Secret Name | Keys | Created By | Used By |
+|-------------|------|------------|---------|
+| `vector-aws-credentials` | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET_NAME | Terraform | Vector (S3 log pull) |
+| `f5xc-tenant-credentials` | TENANT{1,2,3}_NAME, TENANT{1,2,3}_API_URL, TENANT{1,2,3}_API_TOKEN | Bootstrap | f5xc-prom-exporter |
+| `grafana-admin` | admin-user, admin-password | Bootstrap | Grafana |
+
+**Note:** `vector-aws-credentials` is created automatically by `terraform/aws-monitoring-infra/` and annotated to prevent ArgoCD management.
 
 ---
 
@@ -147,12 +149,12 @@ See `observability-bootstrap.yml.example` for the template. Secrets required:
 ```
 terraform/
 └── aws-monitoring-infra/
-    ├── main.tf
+    ├── providers.tf               # AWS + Kubernetes providers
     ├── variables.tf
     ├── outputs.tf
     ├── s3.tf                      # S3 bucket for Global Log Receivers
     ├── iam.tf                     # IAM user/policy for Vector
-    └── providers.tf
+    └── k8s-secret.tf              # Creates vector-aws-credentials secret
 ```
 
 ### Resources Created
@@ -163,7 +165,10 @@ terraform/
 
 2. **IAM User** - For Vector to pull logs
    - Policy: `s3:GetObject`, `s3:ListBucket` on the log bucket
-   - Static credentials (stored in observability-bootstrap.yml)
+
+3. **Kubernetes Secret** - `vector-aws-credentials` in `observability` namespace
+   - Contains IAM credentials + bucket name for Vector
+   - Annotated to prevent ArgoCD management (`argocd.argoproj.io/compare-options: IgnoreExtraneous`)
 
 ### Manual Step After Terraform Apply
 
@@ -362,22 +367,21 @@ If any merge causes issues:
 13. [ ] **Manual:** Create workspace `terrakube-config` pointing to `terraform/terrakube/`
 14. [ ] Apply bootstrap secrets (`terrakube-bootstrap.yml`, `observability-bootstrap.yml`)
 15. [ ] Run Terrakube workspace to create infrastructure org and observability-aws workspace
-16. [ ] Run observability-aws workspace to create S3 bucket and IAM user
-17. [ ] Update `observability-bootstrap.yml` with Vector credentials from terraform output
-18. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
+16. [ ] Run observability-aws workspace (creates S3 bucket, IAM user, and vector-aws-credentials secret)
+17. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
 
 ### Phase 3: Observability Components
-19. [ ] Create Prometheus ArgoCD App + values
-20. [ ] Create Loki ArgoCD App + values
-21. [ ] Create Vector ArgoCD App + values (configured for S3 source)
-22. [ ] Create Grafana ArgoCD App + values
-23. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
+18. [ ] Create Prometheus ArgoCD App + values
+19. [ ] Create Loki ArgoCD App + values
+20. [ ] Create Vector ArgoCD App + values (configured for S3 source)
+21. [ ] Create Grafana ArgoCD App + values
+22. [ ] Create f5xc-prom-exporter manifests + ArgoCD App
 
 ### Phase 4: Dashboards & Alerting
-24. [ ] Create Grafana dashboards for F5 XC metrics
-25. [ ] Create Grafana dashboards for cluster metrics
-26. [ ] Create Grafana dashboards for Lambda metrics
-27. [ ] Configure alerting rules in Prometheus
+23. [ ] Create Grafana dashboards for F5 XC metrics
+24. [ ] Create Grafana dashboards for cluster metrics
+25. [ ] Create Grafana dashboards for Lambda metrics
+26. [ ] Configure alerting rules in Prometheus
 
 ---
 

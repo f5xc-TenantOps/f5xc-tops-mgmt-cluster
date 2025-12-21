@@ -18,13 +18,12 @@ output "vector_user_arn" {
   value       = aws_iam_user.vector.arn
 }
 
-output "vector_access_key_id" {
-  description = "Access key ID for Vector (store in observability-bootstrap.yml)"
-  value       = aws_iam_access_key.vector.id
+output "vector_secret_name" {
+  description = "Name of the Kubernetes secret containing Vector AWS credentials"
+  value       = kubernetes_secret.vector_aws_credentials.metadata[0].name
 }
 
-output "vector_secret_access_key" {
-  description = "Secret access key for Vector (store in observability-bootstrap.yml)"
-  value       = aws_iam_access_key.vector.secret
-  sensitive   = true
+output "vector_secret_namespace" {
+  description = "Namespace of the Kubernetes secret containing Vector AWS credentials"
+  value       = kubernetes_secret.vector_aws_credentials.metadata[0].namespace
 }
