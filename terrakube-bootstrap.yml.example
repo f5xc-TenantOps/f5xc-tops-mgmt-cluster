@@ -17,6 +17,20 @@
 apiVersion: v1
 kind: Secret
 metadata:
+  name: terrakube-github-oauth
+  namespace: terrakube
+type: Opaque
+stringData:
+  # GitHub OAuth App credentials for Dex authentication
+  # Create at: https://github.com/organizations/f5xc-TenantOps/settings/applications/new
+  # Enable "Device Flow" for air-gapped/internal deployments
+  GITHUB_CLIENT_ID: "<GITHUB_CLIENT_ID>"
+  GITHUB_CLIENT_SECRET: "<GITHUB_CLIENT_SECRET>"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: terrakube-api-secrets
   namespace: terrakube
 type: Opaque
