@@ -2,11 +2,11 @@
 # Observability Stack Bootstrap Secrets
 # =============================================================================
 #
-# Secrets for Grafana and f5xc-prom-exporter.
+# Secrets for AWS (Terraform), F5 XC exporter, and Grafana.
 #
-# NOTE: Vector AWS credentials are NOT in this file. They are created
-# automatically by terraform/aws-monitoring-infra/ as a Kubernetes secret
-# named "vector-aws-credentials" in the observability namespace.
+# NOTE: There are TWO AWS secrets:
+#   1. aws-credentials (this file) - Used by Terraform to CREATE S3/IAM resources
+#   2. vector-aws-credentials - Created BY Terraform for Vector to READ from S3
 #
 # Usage:
 #   cp observability-bootstrap.yml.example observability-bootstrap.yml
@@ -16,6 +16,25 @@
 # IMPORTANT: observability-bootstrap.yml is gitignored - never commit real secrets!
 #
 # =============================================================================
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-credentials
+  namespace: observability
+type: Opaque
+stringData:
+  # AWS credentials for Terraform to create S3 bucket and IAM user.
+  # These credentials need permissions to:
+  #   - s3:CreateBucket, s3:PutBucketPolicy, s3:PutLifecycleConfiguration, etc.
+  #   - iam:CreateUser, iam:CreateAccessKey, iam:PutUserPolicy, etc.
+  #
+  # After terraform runs, it creates a SEPARATE secret (vector-aws-credentials)
+  # with read-only credentials for Vector.
+  AWS_ACCESS_KEY_ID: "<AWS_ACCESS_KEY_ID>"
+  AWS_SECRET_ACCESS_KEY: "<AWS_SECRET_ACCESS_KEY>"
+  AWS_REGION: "<AWS_REGION>"
 
 ---
 apiVersion: v1
