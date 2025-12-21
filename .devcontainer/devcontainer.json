@@ -3,8 +3,5 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind"
-  ],
   "remoteUser": "vscode"
 }
