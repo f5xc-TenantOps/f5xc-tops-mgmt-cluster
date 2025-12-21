@@ -44,7 +44,7 @@ Bootstrap secrets are organized by component. Each has a `.example` template.
 | File | Namespace | Contents |
 |------|-----------|----------|
 | `tfc-bootstrap.yml` | `tfc-operator-system` | HCP Terraform token, F5 XC API creds, AWS/GCP creds |
-| `terrakube-bootstrap.yml` | `terrakube` | Terrakube API token, SSH deploy key |
+| `terrakube-bootstrap.yml` | `terrakube` | GitHub OAuth creds, Terrakube API token, SSH deploy key |
 | `observability-bootstrap.yml` | `observability` | AWS creds (for Terraform), F5 XC tenant creds, Grafana admin |
 
 > **Note on AWS secrets:** There are TWO AWS secrets in the observability namespace:
@@ -84,8 +84,16 @@ cp observability-bootstrap.yml.example observability-bootstrap.yml
 
 | Secret | Key | Description |
 |--------|-----|-------------|
+| `terrakube-github-oauth` | `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
+| `terrakube-github-oauth` | `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret |
 | `terrakube-api-secrets` | `TERRAKUBE_TOKEN` | Terrakube API token (for self-management) |
 | `terrakube-api-secrets` | `SSH_PRIVATE_KEY` | SSH deploy key for VCS polling |
+
+To create the GitHub OAuth App:
+1. Go to https://github.com/organizations/f5xc-TenantOps/settings/applications/new
+2. Set **Authorization callback URL** to `https://terrakube-api.tops.k11s.io/dex/callback`
+3. Enable **Device Flow** (for CLI/air-gapped authentication)
+4. Copy the Client ID and Client Secret into the bootstrap file
 
 To generate the SSH deploy key (Terrakube requires RSA in PEM format):
 ```shell
@@ -163,32 +171,69 @@ ArgoCD will sync:
 
 ## Step 5: Bootstrap Terrakube Self-Management
 
-Terrakube manages its own configuration via Terraform, but the initial workspace must be created manually.
+Terrakube manages its own configuration via Terraform, but the initial setup must be done manually.
+
+> **Understanding Terrakube Permissions:** Terrakube has two permission levels:
+> - **Global admin group** (`f5xc-TenantOps:tenantops-admin`) - Can create organizations and grant team access
+> - **Organization-level team permissions** - Must be explicitly granted to manage workspaces, VCS, SSH keys, etc.
+>
+> Being in the admin group lets you create organizations, but doesn't automatically grant permissions within them.
 
 ### 5.1 Create Organization
 
 In Terrakube UI, create an organization named `terrakube`.
 
-### 5.2 Create VCS Connection
+### 5.2 Grant Team Permissions
 
-Create an SSH VCS connection:
-- **Name:** `github-ssh`
-- **SSH Private Key:** Same key from `terrakube-bootstrap.yml`
-- **Repository:** `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
+After creating the organization, you must grant your team permissions to manage resources within it:
 
-### 5.3 Create Bootstrap Workspace
+1. In Terrakube UI, go to the `terrakube` organization
+2. Navigate to **Settings** → **Teams**
+3. Click **Add Team**
+4. Enter team name: `f5xc-TenantOps:tenantops-admin`
+5. Enable all permissions:
+   - ✅ Manage Workspaces
+   - ✅ Manage VCS Settings
+   - ✅ Manage Modules
+   - ✅ Manage Templates
+   - ✅ Manage Providers
+6. Click **Save**
 
-Create a workspace in the `terrakube` org:
-- **Name:** `terrakube-config`
-- **VCS:** Point to `terraform/terrakube/`
-- **No variables needed** - Terraform reads secrets from Kubernetes
+Without this step, you'll get "CreatePermission Denied" errors when trying to create SSH keys, workspaces, or VCS connections.
 
-### 5.4 Run the Workspace
+### 5.3 Create SSH Key
 
-Trigger a run. This creates:
-- Organization: `infrastructure`
-- VCS connection for the infrastructure org
-- Workspace: `observability-aws`
+1. In the `terrakube` organization, go to **Settings** → **SSH Keys**
+2. Click **Add SSH Key**
+3. Enter a name (e.g., `github-deploy-key`)
+4. Paste the private key from `terrakube-bootstrap.yml` (`SSH_PRIVATE_KEY`)
+5. Click **Save**
+
+This SSH key will be used to authenticate when cloning the private repository.
+
+### 5.4 Create Bootstrap Workspace
+
+1. Go to **Workspaces** → **New Workspace**
+2. Select **Terraform** as the IaC type
+3. Select **Version control workflow**
+4. Choose **Connect to a different VCS** and select **SSH**
+5. Enter the repository URL: `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
+6. Select the SSH key created in step 5.3
+7. Configure the workspace:
+   - **Name:** `terrakube-config`
+   - **Branch:** `main`
+   - **Terraform Working Directory:** `terraform/terrakube`
+8. Click **Create Workspace**
+
+No workspace variables are needed - Terraform reads secrets directly from Kubernetes.
+
+### 5.5 Run the Workspace
+
+Trigger a run. The terraform in `terraform/terrakube/` creates additional Terrakube resources:
+
+- **Organization:** `infrastructure`
+- **VCS connection:** SSH connection for the `infrastructure` org (uses same deploy key)
+- **Workspace:** `observability-aws` (with AWS credentials injected from K8s secrets)
 
 ---
 
@@ -335,6 +380,7 @@ kubectl get secret aws-credentials -n observability
 | `terraformrc` | tfc-operator-system | Bootstrap | TFC Operator |
 | `tenant-tokens` | tfc-operator-system | Bootstrap | TFC Operator |
 | `workspacesecrets` | tfc-operator-system | Bootstrap | TFC Operator |
+| `terrakube-github-oauth` | terrakube | Bootstrap | Dex (GitHub OAuth) |
 | `terrakube-api-secrets` | terrakube | Bootstrap | Terrakube, terraform/terrakube |
 | `aws-credentials` | observability | Bootstrap | terraform/terrakube |
 | `f5xc-tenant-credentials` | observability | Bootstrap | f5xc-prom-exporter |
