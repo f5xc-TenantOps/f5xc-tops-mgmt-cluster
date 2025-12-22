@@ -7,6 +7,17 @@ resource "terrakube_organization" "infrastructure" {
   execution_mode = "remote"
 }
 
+# Grant team permissions to manage resources in this organization
+resource "terrakube_team" "admin_team" {
+  organization_id  = terrakube_organization.infrastructure.id
+  name             = "f5xc-TenantOps:tenantops-admin"
+  manage_workspace = true
+  manage_module    = true
+  manage_provider  = true
+  manage_vcs       = true
+  manage_template  = true
+}
+
 # SSH key for private repository access
 resource "terrakube_ssh" "github_deploy_key" {
   organization_id = terrakube_organization.infrastructure.id
@@ -14,6 +25,8 @@ resource "terrakube_ssh" "github_deploy_key" {
   description     = "Deploy key for f5xc-tops-mgmt-cluster repository"
   private_key     = data.kubernetes_secret.terrakube_api.data["SSH_PRIVATE_KEY"]
   ssh_type        = "rsa"
+
+  depends_on = [terrakube_team.admin_team]
 }
 
 # Default template for Plan and Apply workflow
@@ -31,4 +44,6 @@ flow:
     name: "Apply"
     step: 200
 EOF
+
+  depends_on = [terrakube_team.admin_team]
 }
