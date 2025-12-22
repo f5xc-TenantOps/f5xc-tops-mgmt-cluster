@@ -97,6 +97,7 @@ dex:
         - name: f5xc-TenantOps
           teams:
           - tenantops-admin
+          - tenantops-ro
         # Load all groups for team-based permissions
         loadAllGroups: false
         # Use slug format for team names (lowercase with hyphens)

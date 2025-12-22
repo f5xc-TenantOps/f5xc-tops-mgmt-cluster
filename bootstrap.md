@@ -46,6 +46,7 @@ Bootstrap secrets are organized by component. Each has a `.example` template.
 | `tfc-bootstrap.yml` | `tfc-operator-system` | HCP Terraform token, F5 XC API creds, AWS/GCP creds |
 | `terrakube-bootstrap.yml` | `terrakube` | GitHub OAuth creds, Terrakube API token, SSH deploy key |
 | `observability-bootstrap.yml` | `observability` | AWS creds (for Terraform), F5 XC tenant creds, Grafana admin |
+| `argocd-bootstrap.yml` | `argocd` | GitHub OAuth creds (shared with Terrakube) |
 
 > **Note on AWS secrets:** There are TWO AWS secrets in the observability namespace:
 > - `aws-credentials` - Bootstrap secret for Terraform to CREATE S3/IAM resources
@@ -57,6 +58,7 @@ Bootstrap secrets are organized by component. Each has a `.example` template.
 cp tfc-bootstrap.yml.example tfc-bootstrap.yml
 cp terrakube-bootstrap.yml.example terrakube-bootstrap.yml
 cp observability-bootstrap.yml.example observability-bootstrap.yml
+cp argocd-bootstrap.yml.example argocd-bootstrap.yml
 ```
 
 ### Fill in Values
@@ -103,6 +105,18 @@ ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f terrakube-deploy-k
 # Copy contents of terrakube-deploy-key into SSH_PRIVATE_KEY
 ```
 
+#### `argocd-bootstrap.yml`
+
+| Secret | Key | Description |
+|--------|-----|-------------|
+| `argocd-secret` | `dex.github.clientID` | GitHub OAuth App client ID |
+| `argocd-secret` | `dex.github.clientSecret` | GitHub OAuth App client secret |
+
+ArgoCD uses a dedicated GitHub OAuth App ("TOPS ArgoCD"). Create it at https://github.com/organizations/f5xc-TenantOps/settings/applications/new with:
+- **Application name**: `TOPS ArgoCD`
+- **Homepage URL**: `https://argocd.tops.k11s.io`
+- **Authorization callback URL**: `https://argocd.tops.k11s.io/api/dex/callback`
+
 #### `observability-bootstrap.yml`
 
 | Secret | Key | Description |
@@ -126,6 +140,7 @@ The `aws-credentials` secret needs permissions to create S3 buckets and IAM user
 kubectl apply -f tfc-bootstrap.yml
 kubectl apply -f terrakube-bootstrap.yml
 kubectl apply -f observability-bootstrap.yml
+kubectl apply -f argocd-bootstrap.yml
 ```
 
 > **Important:** These files are gitignored. Never commit real secrets.
@@ -185,8 +200,9 @@ In Terrakube UI, create an organization named `terrakube`.
 
 ### 5.2 Grant Team Permissions
 
-After creating the organization, you must grant your team permissions to manage resources within it:
+After creating the organization, you must grant your teams permissions to manage resources within it:
 
+**Admin Team (full access):**
 1. In Terrakube UI, go to the `terrakube` organization
 2. Navigate to **Settings** → **Teams**
 3. Click **Add Team**
@@ -199,7 +215,18 @@ After creating the organization, you must grant your team permissions to manage 
    - ✅ Manage Providers
 6. Click **Save**
 
-Without this step, you'll get "CreatePermission Denied" errors when trying to create SSH keys, workspaces, or VCS connections.
+**Read-Only Team (view access):**
+1. Click **Add Team** again
+2. Enter team name: `f5xc-TenantOps:tenantops-ro`
+3. Disable all permissions (leave all unchecked):
+   - ☐ Manage Workspaces
+   - ☐ Manage VCS Settings
+   - ☐ Manage Modules
+   - ☐ Manage Templates
+   - ☐ Manage Providers
+4. Click **Save**
+
+Without granting admin team permissions, you'll get "CreatePermission Denied" errors when trying to create SSH keys, workspaces, or VCS connections.
 
 ### 5.3 Create SSH Key
 
@@ -382,6 +409,7 @@ kubectl get secret aws-credentials -n observability
 | `workspacesecrets` | tfc-operator-system | Bootstrap | TFC Operator |
 | `terrakube-github-oauth` | terrakube | Bootstrap | Dex (GitHub OAuth) |
 | `terrakube-api-secrets` | terrakube | Bootstrap | Terrakube, terraform/terrakube |
+| `argocd-secret` | argocd | Bootstrap | ArgoCD Dex (GitHub OAuth) |
 | `aws-credentials` | observability | Bootstrap | terraform/terrakube |
 | `f5xc-tenant-credentials` | observability | Bootstrap | f5xc-prom-exporter |
 | `grafana-admin` | observability | Bootstrap | Grafana |
