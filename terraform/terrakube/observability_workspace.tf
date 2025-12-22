@@ -59,3 +59,10 @@ resource "terrakube_workspace_variable" "aws_region" {
   hcl             = false
   description     = "AWS region for resources"
 }
+
+# Schedule to run plan with approval every 3 minutes for drift detection
+resource "terrakube_workspace_schedule" "observability_drift_check" {
+  workspace_id = terrakube_workspace_vcs.observability_aws.id
+  template_id  = terrakube_organization_template.plan_with_approval.id
+  schedule     = "0 0 * ? * *" # Every hour (Quartz cron)
+}
