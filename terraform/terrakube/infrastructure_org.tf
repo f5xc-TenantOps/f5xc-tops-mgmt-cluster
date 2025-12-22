@@ -18,6 +18,18 @@ resource "terrakube_team" "admin_team" {
   manage_template  = true
 }
 
+# Read-only access for tenantops-ro team
+# Users can view resources but cannot create/modify/delete
+resource "terrakube_team" "readonly_team" {
+  organization_id  = terrakube_organization.infrastructure.id
+  name             = "f5xc-TenantOps:tenantops-ro"
+  manage_workspace = false
+  manage_module    = false
+  manage_provider  = false
+  manage_vcs       = false
+  manage_template  = false
+}
+
 # SSH key for private repository access
 resource "terrakube_ssh" "github_deploy_key" {
   organization_id = terrakube_organization.infrastructure.id

@@ -2,6 +2,7 @@
 tfc-bootstrap.yml
 terrakube-bootstrap.yml
 observability-bootstrap.yml
+argocd-bootstrap.yml
 tfc-bootstrap-old.yml
 terrakube-deploy-key*
 

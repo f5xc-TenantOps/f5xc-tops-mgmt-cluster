@@ -1,0 +1,33 @@
+# =============================================================================
+# ArgoCD Bootstrap Secrets
+# =============================================================================
+#
+# Secrets for ArgoCD GitHub OAuth SSO.
+# Uses a dedicated GitHub OAuth App for ArgoCD ("TOPS ArgoCD")
+#
+# Usage:
+#   cp argocd-bootstrap.yml.example argocd-bootstrap.yml
+#   # Edit argocd-bootstrap.yml with real GitHub OAuth credentials
+#   kubectl apply -f argocd-bootstrap.yml
+#
+# IMPORTANT: argocd-bootstrap.yml is gitignored - never commit real secrets!
+#
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-secret
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+type: Opaque
+stringData:
+  # GitHub OAuth App credentials for ArgoCD
+  # Create OAuth App at: https://github.com/organizations/f5xc-TenantOps/settings/applications/new
+  # - Application name: TOPS ArgoCD
+  # - Homepage URL: https://argocd.tops.k11s.io
+  # - Authorization callback URL: https://argocd.tops.k11s.io/api/dex/callback
+  dex.github.clientID: "your-argocd-github-client-id"
+  dex.github.clientSecret: "your-argocd-github-client-secret"
