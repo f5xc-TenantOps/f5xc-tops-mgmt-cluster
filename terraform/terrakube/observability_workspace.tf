@@ -21,6 +21,8 @@ resource "terrakube_workspace_vcs" "observability_aws" {
   # Execution settings
   execution_mode = "remote"
   template_id    = terrakube_organization_template.plan_apply.id
+
+  depends_on = [terrakube_team.admin_team]
 }
 
 # Inject AWS credentials as workspace environment variables
