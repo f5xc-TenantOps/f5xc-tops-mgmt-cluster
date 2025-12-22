@@ -47,3 +47,26 @@ EOF
 
   depends_on = [terrakube_team.admin_team]
 }
+
+# Plan with Approval template for scheduled drift detection
+resource "terrakube_organization_template" "plan_with_approval" {
+  name            = "Plan with Approval"
+  organization_id = terrakube_organization.infrastructure.id
+  description     = "Plan followed by approval gate before apply"
+  version         = "1.0.0"
+  content         = <<-EOF
+flow:
+  - type: "terraformPlan"
+    name: "Plan"
+    step: 100
+  - type: "approval"
+    name: "Approve Apply"
+    step: 150
+    team: "f5xc-TenantOps:tenantops-admin"
+  - type: "terraformApply"
+    name: "Apply"
+    step: 200
+EOF
+
+  depends_on = [terrakube_team.admin_team]
+}

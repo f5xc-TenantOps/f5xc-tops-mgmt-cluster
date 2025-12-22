@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: terrakube-job-cleanup
+  namespace: terrakube
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cleanup
+              image: postgres:15-alpine
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: terrakube-postgresql
+                      key: postgres-password
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Starting Terrakube job cleanup..."
+
+                  # Delete job records older than 7 days
+                  # This only removes execution history, not Terraform state
+                  psql -h terrakube-postgresql -U postgres -d terrakube -c "
+                    DELETE FROM step WHERE job_id IN (
+                      SELECT id FROM job WHERE created_date < NOW() - INTERVAL '7 days'
+                    );
+                  "
+
+                  psql -h terrakube-postgresql -U postgres -d terrakube -c "
+                    DELETE FROM history WHERE job_id IN (
+                      SELECT id FROM job WHERE created_date < NOW() - INTERVAL '7 days'
+                    );
+                  "
+
+                  psql -h terrakube-postgresql -U postgres -d terrakube -c "
+                    DELETE FROM job WHERE created_date < NOW() - INTERVAL '7 days';
+                  "
+
+                  echo "Cleanup complete. Deleted jobs older than 7 days."
