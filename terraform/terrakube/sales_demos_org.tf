@@ -15,7 +15,10 @@ resource "terrakube_team" "sales_demos_admin" {
   manage_module    = true
   manage_provider  = true
   manage_vcs       = true
-  manage_template  = true
+  manage_template   = true
+  manage_state      = true
+  manage_job        = true
+  manage_collection = true
 }
 
 # Read-only access for tenantops-ro team
