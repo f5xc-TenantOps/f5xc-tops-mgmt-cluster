@@ -91,7 +91,15 @@ dex:
   config:
     issuer: https://terrakube-api.tops.k11s.io/dex
     storage:
-      type: memory
+      type: postgres
+      config:
+        host: terrakube-postgresql
+        port: 5432
+        database: terrakube
+        user: terrakube
+        password: terrakubepassword
+        ssl:
+          mode: disable
     web:
       http: 0.0.0.0:5556
       allowedOrigins: ["*"]
