@@ -28,7 +28,7 @@ The management cluster runs:
 Apply the namespace definitions:
 
 ```shell
-kubectl apply -f bootstrap-ns.yml
+kubectl apply -f bootstrap/bootstrap-ns.yml
 ```
 
 This creates: `argocd`, `terrakube`, `observability`, `tfc-operator-system`
@@ -55,10 +55,10 @@ Bootstrap secrets are organized by component. Each has a `.example` template.
 ### Create Secret Files
 
 ```shell
-cp tfc-bootstrap.yml.example tfc-bootstrap.yml
-cp terrakube-bootstrap.yml.example terrakube-bootstrap.yml
-cp observability-bootstrap.yml.example observability-bootstrap.yml
-cp argocd-bootstrap.yml.example argocd-bootstrap.yml
+cp bootstrap/tfc-bootstrap.yml.example bootstrap/tfc-bootstrap.yml
+cp bootstrap/terrakube-bootstrap.yml.example bootstrap/terrakube-bootstrap.yml
+cp bootstrap/observability-bootstrap.yml.example bootstrap/observability-bootstrap.yml
+cp bootstrap/argocd-bootstrap.yml.example bootstrap/argocd-bootstrap.yml
 ```
 
 ### Fill in Values
@@ -99,10 +99,10 @@ To create the GitHub OAuth App:
 
 To generate the SSH deploy key (Terrakube requires RSA in PEM format):
 ```shell
-ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
+ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f bootstrap/terrakube-deploy-key -N ""
 # Verify the key starts with "-----BEGIN RSA PRIVATE KEY-----" (not "BEGIN OPENSSH")
-# Add terrakube-deploy-key.pub as a deploy key in GitHub
-# Copy contents of terrakube-deploy-key into SSH_PRIVATE_KEY
+# Add bootstrap/terrakube-deploy-key.pub as a deploy key in GitHub
+# Copy contents of bootstrap/terrakube-deploy-key into SSH_PRIVATE_KEY
 ```
 
 #### `argocd-bootstrap.yml`
@@ -137,10 +137,10 @@ The `aws-credentials` secret needs permissions to create S3 buckets and IAM user
 ### Apply Secrets
 
 ```shell
-kubectl apply -f tfc-bootstrap.yml
-kubectl apply -f terrakube-bootstrap.yml
-kubectl apply -f observability-bootstrap.yml
-kubectl apply -f argocd-bootstrap.yml
+kubectl apply -f bootstrap/tfc-bootstrap.yml
+kubectl apply -f bootstrap/terrakube-bootstrap.yml
+kubectl apply -f bootstrap/observability-bootstrap.yml
+kubectl apply -f bootstrap/argocd-bootstrap.yml
 ```
 
 > **Important:** These files are gitignored. Never commit real secrets.
@@ -152,11 +152,11 @@ kubectl apply -f argocd-bootstrap.yml
 Create ArgoCD configuration files for your environment (these are gitignored):
 
 ```shell
-# Create argocd-config.yml with your OIDC/Dex configuration
-# Create argocd-ingress.yml with your ingress settings
+# Create bootstrap/argocd-config.yml with your OIDC/Dex configuration
+# Create bootstrap/argocd-ingress.yml with your ingress settings
 
-kubectl replace -f argocd-config.yml
-kubectl apply -f argocd-ingress.yml
+kubectl replace -f bootstrap/argocd-config.yml
+kubectl apply -f bootstrap/argocd-ingress.yml
 ```
 
 Update the admin password if needed:
@@ -233,7 +233,7 @@ Without granting admin team permissions, you'll get "CreatePermission Denied" er
 1. In the `terrakube` organization, go to **Settings** → **SSH Keys**
 2. Click **Add SSH Key**
 3. Enter a name (e.g., `github-deploy-key`)
-4. Paste the private key from `terrakube-bootstrap.yml` (`SSH_PRIVATE_KEY`)
+4. Paste the private key from `bootstrap/terrakube-bootstrap.yml` (`SSH_PRIVATE_KEY`)
 5. Click **Save**
 
 This SSH key will be used to authenticate when cloning the private repository.
@@ -365,8 +365,8 @@ kubectl get secret aws-credentials -n observability
 │                              BOOTSTRAP FLOW                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  1. kubectl apply -f bootstrap-ns.yml                                   │
-│  2. kubectl apply -f *-bootstrap.yml (secrets)                          │
+│  1. kubectl apply -f bootstrap/bootstrap-ns.yml                         │
+│  2. kubectl apply -f bootstrap/*-bootstrap.yml (secrets)                │
 │  3. kubectl apply -f argocd/argocd-app.yml                              │
 │                        │                                                │
 │                        ▼                                                │
