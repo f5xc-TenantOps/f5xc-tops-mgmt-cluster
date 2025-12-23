@@ -16,7 +16,7 @@ resource "terrakube_workspace_vcs" "observability_aws" {
 
   # Terraform configuration
   iac_type    = "terraform"
-  iac_version = "1.6.0"
+  iac_version = "1.10.3"
 
   # Execution settings
   execution_mode = "remote"
