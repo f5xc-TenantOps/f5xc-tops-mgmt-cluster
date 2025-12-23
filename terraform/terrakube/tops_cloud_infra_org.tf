@@ -2,8 +2,8 @@
 # Contains workspaces for AWS infrastructure, and later tfc-operator migrations
 
 resource "terrakube_organization" "infrastructure" {
-  name           = "infrastructure"
-  description    = "Infrastructure workspaces for observability, and future tfc-operator migrations"
+  name           = "Tops Cloud Infra"
+  description    = "Cloud infrastructure workspaces for observability, and future tfc-operator migrations"
   execution_mode = "remote"
 }
 
