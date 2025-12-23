@@ -15,5 +15,5 @@ output "ssh_key_id" {
 
 output "template_id" {
   description = "ID of the Plan and Apply template"
-  value       = terrakube_organization_template.plan_apply.id
+  value       = data.terrakube_organization_template.plan_apply.id
 }

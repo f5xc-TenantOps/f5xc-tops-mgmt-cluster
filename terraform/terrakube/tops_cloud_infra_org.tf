@@ -2,8 +2,8 @@
 # Contains workspaces for AWS infrastructure, and later tfc-operator migrations
 
 resource "terrakube_organization" "infrastructure" {
-  name           = "infrastructure"
-  description    = "Infrastructure workspaces for observability, and future tfc-operator migrations"
+  name           = "Tops Cloud Infra"
+  description    = "Cloud infrastructure workspaces for observability, and future tfc-operator migrations"
   execution_mode = "remote"
 }
 
@@ -15,7 +15,10 @@ resource "terrakube_team" "admin_team" {
   manage_module    = true
   manage_provider  = true
   manage_vcs       = true
-  manage_template  = true
+  manage_template   = true
+  manage_state      = true
+  manage_job        = true
+  manage_collection = true
 }
 
 # Read-only access for tenantops-ro team
