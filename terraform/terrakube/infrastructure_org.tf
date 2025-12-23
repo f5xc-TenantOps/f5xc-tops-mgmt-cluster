@@ -41,21 +41,10 @@ resource "terrakube_ssh" "github_deploy_key" {
   depends_on = [terrakube_team.admin_team]
 }
 
-# Default template for Plan and Apply workflow
-resource "terrakube_organization_template" "plan_apply" {
-  name            = "Plan and Apply"
+# Look up the built-in "Plan and apply" template (created automatically with the org)
+data "terrakube_organization_template" "plan_apply" {
   organization_id = terrakube_organization.infrastructure.id
-  description     = "Standard Terraform plan and apply workflow"
-  version         = "1.0.0"
-  content         = <<-EOF
-flow:
-  - type: "terraformPlan"
-    name: "Plan"
-    step: 100
-  - type: "terraformApply"
-    name: "Apply"
-    step: 200
-EOF
+  name            = "Plan and apply"
 
   depends_on = [terrakube_team.admin_team]
 }
