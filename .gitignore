@@ -1,16 +1,15 @@
 # Bootstrap secrets (per-project)
-tfc-bootstrap.yml
-terrakube-bootstrap.yml
-observability-bootstrap.yml
-argocd-bootstrap.yml
-tfc-bootstrap-old.yml
-terrakube-deploy-key*
+bootstrap/tfc-bootstrap.yml
+bootstrap/terrakube-bootstrap.yml
+bootstrap/observability-bootstrap.yml
+bootstrap/argocd-bootstrap.yml
+bootstrap/terrakube-deploy-key
 
 # Cluster-specific configuration
-argocd-config.yml
-argocd-ingress.yml
-cert-manager-config.yml
-coredns-config.yml
+bootstrap/argocd-config.yml
+bootstrap/argocd-ingress.yml
+bootstrap/cert-manager-config.yml
+bootstrap/coredns-config.yml
 
 # Claude Code
 .claude/
