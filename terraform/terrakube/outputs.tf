@@ -1,16 +1,11 @@
 output "infrastructure_org_id" {
-  description = "ID of the infrastructure organization"
+  description = "ID of the Tops Cloud Infra organization"
   value       = terrakube_organization.infrastructure.id
 }
 
 output "observability_aws_workspace_id" {
   description = "ID of the observability-aws workspace"
   value       = terrakube_workspace_vcs.observability_aws.id
-}
-
-output "ssh_key_id" {
-  description = "ID of the SSH key for repository access"
-  value       = terrakube_ssh.github_deploy_key.id
 }
 
 output "template_id" {

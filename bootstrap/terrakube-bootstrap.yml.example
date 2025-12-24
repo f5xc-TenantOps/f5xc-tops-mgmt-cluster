@@ -37,10 +37,3 @@ type: Opaque
 stringData:
   # Terrakube API token (for self-management via Terraform)
   TERRAKUBE_TOKEN: "<TERRAKUBE_API_TOKEN>"
-  # SSH deploy key for VCS polling (RSA in PEM format - Terrakube requires this)
-  # Generate with: ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f terrakube-deploy-key -N ""
-  # Key MUST start with "-----BEGIN RSA PRIVATE KEY-----" (not "BEGIN OPENSSH")
-  SSH_PRIVATE_KEY: |
-    -----BEGIN RSA PRIVATE KEY-----
-    <DEPLOY_KEY_FOR_THIS_REPO>
-    -----END RSA PRIVATE KEY-----

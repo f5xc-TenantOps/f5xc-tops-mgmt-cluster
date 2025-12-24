@@ -89,21 +89,12 @@ cp bootstrap/argocd-bootstrap.yml.example bootstrap/argocd-bootstrap.yml
 | `terrakube-github-oauth` | `GITHUB_CLIENT_ID` | GitHub OAuth App client ID |
 | `terrakube-github-oauth` | `GITHUB_CLIENT_SECRET` | GitHub OAuth App client secret |
 | `terrakube-api-secrets` | `TERRAKUBE_TOKEN` | Terrakube API token (for self-management) |
-| `terrakube-api-secrets` | `SSH_PRIVATE_KEY` | SSH deploy key for VCS polling |
 
 To create the GitHub OAuth App:
 1. Go to https://github.com/organizations/f5xc-TenantOps/settings/applications/new
 2. Set **Authorization callback URL** to `https://terrakube-api.tops.k11s.io/dex/callback`
 3. Enable **Device Flow** (for CLI/air-gapped authentication)
 4. Copy the Client ID and Client Secret into the bootstrap file
-
-To generate the SSH deploy key (Terrakube requires RSA in PEM format):
-```shell
-ssh-keygen -t rsa -b 4096 -m PEM -C "terrakube-deploy-key" -f bootstrap/terrakube-deploy-key -N ""
-# Verify the key starts with "-----BEGIN RSA PRIVATE KEY-----" (not "BEGIN OPENSSH")
-# Add bootstrap/terrakube-deploy-key.pub as a deploy key in GitHub
-# Copy contents of bootstrap/terrakube-deploy-key into SSH_PRIVATE_KEY
-```
 
 #### `argocd-bootstrap.yml`
 
@@ -226,40 +217,29 @@ After creating the organization, you must grant your teams permissions to manage
    - ☐ Manage Providers
 4. Click **Save**
 
-Without granting admin team permissions, you'll get "CreatePermission Denied" errors when trying to create SSH keys, workspaces, or VCS connections.
+Without granting admin team permissions, you'll get "CreatePermission Denied" errors when trying to create workspaces or other resources.
 
-### 5.3 Create SSH Key
-
-1. In the `terrakube` organization, go to **Settings** → **SSH Keys**
-2. Click **Add SSH Key**
-3. Enter a name (e.g., `github-deploy-key`)
-4. Paste the private key from `bootstrap/terrakube-bootstrap.yml` (`SSH_PRIVATE_KEY`)
-5. Click **Save**
-
-This SSH key will be used to authenticate when cloning the private repository.
-
-### 5.4 Create Bootstrap Workspace
+### 5.3 Create Bootstrap Workspace
 
 1. Go to **Workspaces** → **New Workspace**
 2. Select **Terraform** as the IaC type
 3. Select **Version control workflow**
-4. Choose **Connect to a different VCS** and select **SSH**
-5. Enter the repository URL: `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
-6. Select the SSH key created in step 5.3
-7. Configure the workspace:
+4. Enter the repository URL: `https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster`
+5. Configure the workspace:
    - **Name:** `terrakube-config`
    - **Branch:** `main`
    - **Terraform Working Directory:** `terraform/terrakube`
-8. Click **Create Workspace**
+6. Click **Create Workspace**
+
+> **Note:** Since this is a public repository, no SSH key or VCS authentication is needed.
 
 No workspace variables are needed - Terraform reads secrets directly from Kubernetes.
 
-### 5.5 Run the Workspace
+### 5.4 Run the Workspace
 
 Trigger a run. The terraform in `terraform/terrakube/` creates additional Terrakube resources:
 
-- **Organization:** `infrastructure`
-- **VCS connection:** SSH connection for the `infrastructure` org (uses same deploy key)
+- **Organization:** `Tops Cloud Infra`
 - **Workspace:** `observability-aws` (with AWS credentials injected from K8s secrets)
 
 ---
@@ -276,7 +256,7 @@ The `observability-aws` workspace (created in Step 5) provisions AWS resources f
 
 ### Run the Workspace
 
-In Terrakube, navigate to the `infrastructure` org and trigger a run on `observability-aws`.
+In Terrakube, navigate to the `Tops Cloud Infra` org and trigger a run on `observability-aws`.
 
 The Terraform reads `aws-credentials` from Kubernetes (applied in Step 2), creates the AWS resources, and writes `vector-aws-credentials` back to the cluster for Vector to use.
 
@@ -378,13 +358,13 @@ kubectl get secret aws-credentials -n observability
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                        │                                                │
 │                        ▼                                                │
-│  4. Manual: Create terrakube org + terrakube-config workspace           │
+│  4. Manual: Create terrakube org + terrakube-config workspace (HTTPS)   │
 │                        │                                                │
 │                        ▼                                                │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │  Terrakube runs terraform/terrakube/                            │   │
 │  │  • Reads: terrakube-api-secrets, aws-credentials                │   │
-│  │  • Creates: infrastructure org, observability-aws workspace     │   │
+│  │  • Creates: Tops Cloud Infra org, observability-aws workspace   │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                        │                                                │
 │                        ▼                                                │
