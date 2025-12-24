@@ -11,8 +11,8 @@ resource "terrakube_workspace_vcs" "observability_aws" {
   branch     = "main"
   folder     = "terraform/aws-monitoring-infra"
 
-  # SSH key is associated at org level, not passed as vcs_id
-  # (vcs_id is for OAuth VCS connections, not SSH keys)
+  # SSH key for private repository access
+  vcs_id = terrakube_ssh.github_deploy_key.id
 
   # Terraform configuration
   iac_type    = "terraform"
