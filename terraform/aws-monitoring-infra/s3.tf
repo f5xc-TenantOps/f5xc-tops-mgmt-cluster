@@ -17,6 +17,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "global_logs" {
     id     = "expire-old-logs"
     status = "Enabled"
 
+    filter {} # Apply to all objects
+
     expiration {
       days = var.retention_days
     }
