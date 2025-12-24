@@ -6,13 +6,10 @@ resource "terrakube_workspace_vcs" "observability_aws" {
   name            = "observability-aws"
   description     = "AWS infrastructure for observability stack (S3 bucket, IAM for Vector)"
 
-  # VCS configuration
-  repository = "git@github.com:${var.github_repo}.git"
+  # VCS configuration (public repo, use HTTPS)
+  repository = "https://github.com/${var.github_repo}"
   branch     = "main"
   folder     = "terraform/aws-monitoring-infra"
-
-  # SSH key for private repository access
-  vcs_id = terrakube_ssh.github_deploy_key.id
 
   # Terraform configuration
   iac_type    = "terraform"

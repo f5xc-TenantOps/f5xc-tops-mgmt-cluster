@@ -194,15 +194,16 @@ Terrakube manages its own configuration through a two-tier organization structur
 │  │  Org: terrakube (MANUAL - Bootstrap)                            │   │
 │  │  ────────────────────────────────────────────────────────────── │   │
 │  │  Workspace: terrakube-config                                    │   │
+│  │    • Repo: https://github.com/.../f5xc-tops-mgmt-cluster        │   │
 │  │    • Path: terraform/terrakube/                                 │   │
-│  │    • Creates: infrastructure org, VCS connection, workspaces   │   │
+│  │    • Creates: Tops Cloud Infra org, workspaces                 │   │
 │  │    • Reads secrets from: terrakube namespace (k8s)             │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                              │                                          │
 │                              │ creates & manages                        │
 │                              ▼                                          │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  Org: infrastructure (TERRAFORM-MANAGED)                        │   │
+│  │  Org: Tops Cloud Infra (TERRAFORM-MANAGED)                      │   │
 │  │  ────────────────────────────────────────────────────────────── │   │
 │  │  Workspace: observability-aws                                   │   │
 │  │    • Path: terraform/aws-monitoring-infra/                      │   │
@@ -224,17 +225,14 @@ Terrakube needs a workspace to run terraform, but we can't use terraform to crea
 1. **Create Organization: `terrakube`**
    - This org holds the bootstrap workspace that manages all other Terrakube config
 
-2. **Create SSH VCS Connection**
-   - Deploy key for `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
-   - No inbound internet required (polling-based)
-
-3. **Create Workspace: `terrakube-config`**
-   - VCS: Point to `terraform/terrakube/`
+2. **Create Workspace: `terrakube-config`**
+   - Repository: `https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster` (public, no auth needed)
+   - Path: `terraform/terrakube/`
    - No workspace variables needed - terraform reads secrets from Kubernetes
 
 ### Terraform Project: `terraform/terrakube/`
 
-This terraform creates and manages the `infrastructure` org and its workspaces. It reads secrets directly from Kubernetes using the kubernetes provider.
+This terraform creates and manages the `Tops Cloud Infra` org and its workspaces. It reads secrets directly from Kubernetes using the kubernetes provider.
 
 ```
 terraform/
@@ -242,9 +240,9 @@ terraform/
     ├── providers.tf               # terrakube + kubernetes providers
     ├── variables.tf               # terrakube endpoint, org name, github repo
     ├── secrets.tf                 # kubernetes_secret data sources
-    ├── infrastructure_org.tf      # Creates infrastructure org + VCS
+    ├── tops_cloud_infra_org.tf    # Creates Tops Cloud Infra org
     ├── observability_workspace.tf # Creates observability-aws workspace
-    └── outputs.tf                 # Org ID, workspace ID, VCS ID
+    └── outputs.tf                 # Org ID, workspace ID
 ```
 
 ### Secret Flow
@@ -260,16 +258,15 @@ The terraform reads secrets from Kubernetes rather than Terrakube workspace vari
 
 | Organization | Workspace | Created By | Path | Purpose |
 |--------------|-----------|------------|------|---------|
-| `terrakube` | `terrakube-config` | Manual (bootstrap) | `terraform/terrakube/` | Manages infrastructure org |
-| `infrastructure` | `observability-aws` | Terraform | `terraform/aws-monitoring-infra/` | S3 bucket, IAM for Vector |
-| `infrastructure` | (future) | Terraform | Various | Additional infra workspaces |
+| `terrakube` | `terrakube-config` | Manual (bootstrap) | `terraform/terrakube/` | Manages Tops Cloud Infra org |
+| `Tops Cloud Infra` | `observability-aws` | Terraform | `terraform/aws-monitoring-infra/` | S3 bucket, IAM for Vector |
+| `Tops Cloud Infra` | (future) | Terraform | Various | Additional infra workspaces |
 
 ### VCS Connection
 
-- **Method:** SSH deploy key (no inbound internet required)
+- **Method:** HTTPS (public repository, no authentication required)
 - **Polling:** Periodic (configured in Terrakube)
-- **Repository:** `git@github.com:f5xc-TenantOps/f5xc-tops-mgmt-cluster.git`
-- **Created by:** `terraform/terrakube/` (shared by all workspaces in `infrastructure` org)
+- **Repository:** `https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster`
 
 ### Terrakube Secrets
 
@@ -364,14 +361,13 @@ If any merge causes issues:
 
 ### Phase 2: Terrakube Bootstrap & AWS Infrastructure
 9. [x] Write `terraform/aws-monitoring-infra/` Terraform
-10. [x] Write `terraform/terrakube/` Terraform (manages infrastructure org + workspaces)
+10. [x] Write `terraform/terrakube/` Terraform (manages Tops Cloud Infra org + workspaces)
 11. [ ] **Manual:** Create Terrakube org `terrakube`
-12. [ ] **Manual:** Create SSH deploy key and VCS connection in Terrakube
-13. [ ] **Manual:** Create workspace `terrakube-config` pointing to `terraform/terrakube/`
-14. [ ] Apply bootstrap secrets (`terrakube-bootstrap.yml`, `observability-bootstrap.yml`)
-15. [ ] Run Terrakube workspace to create infrastructure org and observability-aws workspace
-16. [ ] Run observability-aws workspace (creates S3 bucket, IAM user, and vector-aws-credentials secret)
-17. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
+12. [ ] **Manual:** Create workspace `terrakube-config` pointing to `https://github.com/f5xc-TenantOps/f5xc-tops-mgmt-cluster`
+13. [ ] Apply bootstrap secrets (`terrakube-bootstrap.yml`, `observability-bootstrap.yml`)
+14. [ ] Run Terrakube workspace to create Tops Cloud Infra org and observability-aws workspace
+15. [ ] Run observability-aws workspace (creates S3 bucket, IAM user, and vector-aws-credentials secret)
+16. [ ] Configure F5 XC Global Log Receivers (manual in F5 XC console)
 
 ### Phase 3: Observability Components
 18. [ ] Create Prometheus ArgoCD App + values

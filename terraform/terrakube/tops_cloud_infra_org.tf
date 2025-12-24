@@ -33,17 +33,6 @@ resource "terrakube_team" "readonly_team" {
   manage_template  = false
 }
 
-# SSH key for private repository access
-resource "terrakube_ssh" "github_deploy_key" {
-  organization_id = terrakube_organization.infrastructure.id
-  name            = "github-deploy-key"
-  description     = "Deploy key for f5xc-tops-mgmt-cluster repository"
-  private_key     = data.kubernetes_secret.terrakube_api.data["SSH_PRIVATE_KEY"]
-  ssh_type        = "rsa"
-
-  depends_on = [terrakube_team.admin_team]
-}
-
 # Look up the built-in "Plan and apply" template (created automatically with the org)
 data "terrakube_organization_template" "plan_apply" {
   organization_id = terrakube_organization.infrastructure.id
