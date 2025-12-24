@@ -26,9 +26,9 @@ metadata:
 type: Opaque
 stringData:
   # AWS credentials for Terraform to create S3 bucket and IAM user.
-  # These credentials need permissions to:
-  #   - s3:CreateBucket, s3:PutBucketPolicy, s3:PutLifecycleConfiguration, etc.
-  #   - iam:CreateUser, iam:CreateAccessKey, iam:PutUserPolicy, etc.
+  #
+  # Required IAM permissions are defined in: bootstrap/aws-iam-policy.json
+  # See bootstrap.md "AWS Account Setup" section for setup instructions.
   #
   # After terraform runs, it creates a SEPARATE secret (vector-aws-credentials)
   # with read-only credentials for Vector.

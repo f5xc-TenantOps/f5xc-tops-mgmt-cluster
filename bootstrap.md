@@ -23,6 +23,54 @@ The management cluster runs:
 
 ---
 
+## AWS Account Setup
+
+Before bootstrapping, create an IAM user or role in AWS with permissions to manage the observability infrastructure.
+
+### Create IAM Policy
+
+Create a policy using the JSON in [`bootstrap/aws-iam-policy.json`](bootstrap/aws-iam-policy.json):
+
+```shell
+aws iam create-policy \
+  --policy-name TerrakubeObservabilityInfra \
+  --policy-document file://bootstrap/aws-iam-policy.json \
+  --description "Permissions for Terrakube to manage F5 XC observability infrastructure"
+```
+
+### Create IAM User
+
+Create a dedicated IAM user and attach the policy:
+
+```shell
+# Create user
+aws iam create-user --user-name terrakube-observability
+
+# Attach policy (replace ACCOUNT_ID with your AWS account ID)
+aws iam attach-user-policy \
+  --user-name terrakube-observability \
+  --policy-arn arn:aws:iam::ACCOUNT_ID:policy/TerrakubeObservabilityInfra
+
+# Create access key
+aws iam create-access-key --user-name terrakube-observability
+```
+
+Save the `AccessKeyId` and `SecretAccessKey` from the output—you'll need them for `observability-bootstrap.yml`.
+
+### Policy Permissions Summary
+
+The policy grants permissions to:
+
+| Service | Actions | Resources |
+|---------|---------|-----------|
+| S3 | Create/configure bucket, lifecycle, encryption, public access block | `f5xc-tops-global-logs` bucket |
+| IAM | Create/manage user and access keys | `vector-log-reader` user |
+| IAM | Attach inline policies | `vector-log-reader` user |
+
+> **Note:** Replace `*` in the IAM ARNs with your AWS account ID for tighter security.
+
+---
+
 ## Step 1: Create Namespaces
 
 Apply the namespace definitions:

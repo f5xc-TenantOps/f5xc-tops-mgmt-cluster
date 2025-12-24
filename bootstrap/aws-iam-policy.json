@@ -1,0 +1,86 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "S3BucketManagement",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:DeleteBucket",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:GetBucketPolicy",
+                "s3:PutBucketPolicy",
+                "s3:DeleteBucketPolicy",
+                "s3:GetBucketVersioning",
+                "s3:PutBucketVersioning",
+                "s3:GetLifecycleConfiguration",
+                "s3:PutLifecycleConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:PutEncryptionConfiguration",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketAcl",
+                "s3:PutBucketAcl",
+                "s3:GetBucketTagging",
+                "s3:PutBucketTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::f5xc-tops-global-logs"
+            ]
+        },
+        {
+            "Sid": "S3ObjectOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::f5xc-tops-global-logs/*"
+            ]
+        },
+        {
+            "Sid": "IAMUserManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateUser",
+                "iam:DeleteUser",
+                "iam:GetUser",
+                "iam:TagUser",
+                "iam:UntagUser",
+                "iam:ListUserTags"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:user/service-accounts/vector-log-reader"
+            ]
+        },
+        {
+            "Sid": "IAMAccessKeyManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateAccessKey",
+                "iam:DeleteAccessKey",
+                "iam:ListAccessKeys",
+                "iam:GetAccessKeyLastUsed"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:user/service-accounts/vector-log-reader"
+            ]
+        },
+        {
+            "Sid": "IAMUserPolicyManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PutUserPolicy",
+                "iam:GetUserPolicy",
+                "iam:DeleteUserPolicy",
+                "iam:ListUserPolicies"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:user/service-accounts/vector-log-reader"
+            ]
+        }
+    ]
+}
